@@ -1,57 +1,78 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import shell from 'shelljs';
+// Importamos nosso módulo de rede criado anteriormente
+import { menuRede } from './rede.js';
 
-// Função principal que exibe o menu
+// Função principal
 async function mainMenu() {
-    // Limpa o terminal para ficar bonito
-    console.clear();
+    let running = true;
 
-    // Cabeçalho colorido
-    console.log(chalk.green.bold('============================================='));
-    console.log(chalk.green.bold('       🚀 IT QUICKTOOLS - SUPORTE TI         '));
-    console.log(chalk.green.bold('============================================='));
-    console.log(''); // Linha em branco
+    while (running) {
+        console.clear();
+        console.log(chalk.green.bold('============================================='));
+        console.log(chalk.green.bold('       🚀 IT QUICKTOOLS - SUPORTE TI         '));
+        console.log(chalk.green.bold('============================================='));
+        console.log('');
 
-    // Pergunta ao usuário
-    const answer = await inquirer.prompt([
+        const answer = await inquirer.prompt([
+            {
+                type: 'list', // Lembre-se: use 'rawlist' se 'list' der bug
+                name: 'category',
+                message: 'Selecione uma categoria:',
+                pageSize: 10,
+                choices: [
+                    '🌐 Rede (IP, DNS, Ping, Tracert)',
+                    '💻 Sistema (Info, Usuários, Domínio)',
+                    '🩺 Diagnóstico (Eventos, Memória)',
+                    '🧹 Limpeza (Cache, Temp, Lixeira)',
+                    '⚙️  Scripts Avançados (SFC, DISM)',
+                    new inquirer.Separator(),
+                    '❌ Sair'
+                ]
+            }
+        ]);
+
+        // O resultado define se o loop continua (true) ou para (false)
+        running = await handleChoice(answer.category);
+    }
+}
+
+// Roteador de escolhas
+async function handleChoice(option) {
+    if (option.includes('Sair')) {
+        console.log(chalk.red('\nSaindo... Até mais! 👋'));
+        return false; // Quebra o while e encerra
+    }
+
+    // Lógica de Rede
+    if (option.includes('Rede')) {
+        await menuRede();
+        // Não precisamos de pausa aqui pois o próprio menuRede já tem interações
+        // e quando ele termina, ele volta para cá
+        return true;
+    }
+
+    // Lógica Genérica para opções ainda não criadas
+    console.log(chalk.yellow(`\nVocê escolheu: ${option}`));
+    console.log(chalk.gray('Funcionalidade em desenvolvimento...'));
+
+    // AQUI ESTÁ A MELHORIA DE UX:
+    // Em vez de sleep(), obrigamos o usuário a confirmar que leu
+    await waitPressEnter();
+
+    return true; // Continua o loop
+}
+
+// Função auxiliar apenas para pausar a tela
+async function waitPressEnter() {
+    console.log('');
+    await inquirer.prompt([
         {
-            type: 'list',
-            name: 'category',
-            message: 'Selecione uma categoria de ferramentas:',
-            choices: [
-                '🌐 Rede (IP, DNS, Ping, Tracert)',
-                '💻 Sistema (Info, Usuários, Domínio)',
-                '🩺 Diagnóstico (Eventos, Memória)',
-                '🧹 Limpeza (Cache, Temp, Lixeira)',
-                '⚙️  Scripts Avançados (SFC, DISM)',
-                new inquirer.Separator(), // Uma linha separadora visual
-                '❌ Sair'
-            ]
+            type: 'input',
+            name: 'enter',
+            message: 'Pressione ENTER para voltar ao menu...',
         }
     ]);
-
-    // Roteador de escolhas (decide o que fazer baseada na escolha)
-    handleChoice(answer.category);
 }
 
-// Função que processa a escolha
-function handleChoice(option) {
-    console.log(chalk.yellow(`\nVocê escolheu: ${option}`));
-    console.log(chalk.gray('Funcionalidade ainda em desenvolvimento...'));
-
-    // Pequeno delay para ler a mensagem e voltar (simulação)
-    setTimeout(() => {
-        if (!option.includes('Sair')) {
-            // Se não for sair, aperta Enter para voltar
-            console.log('\nPressione Ctrl+C para encerrar por enquanto.');
-            // Futuramente faremos o menu voltar automaticamente aqui
-        } else {
-            console.log(chalk.red('Saindo... Até mais!'));
-            process.exit(0);
-        }
-    }, 1000);
-}
-
-// Inicia o programa
 mainMenu();

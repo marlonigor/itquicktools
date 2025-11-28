@@ -13,9 +13,14 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/marlonigor/itquicktools/issues"
   },
-  "homepage": "https://github.com/marlonigor/itquicktools#readme"
+  "homepage": "https://github.com/marlonigor/itquicktools#readme",
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "inquirer": "^13.0.1",
+    "shelljs": "^0.10.0"
+  }
 }

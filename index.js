@@ -1,9 +1,9 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-// Importamos nosso módulo de rede criado anteriormente
 import { menuRede } from './rede.js';
+import { menuSistema } from './sistema.js';
+import { waitPressEnter } from './utils.js';
 
-// Função principal
 async function mainMenu() {
     let running = true;
 
@@ -52,27 +52,20 @@ async function handleChoice(option) {
         return true;
     }
 
+    // Lógica de Sistema
+    if (option.includes('Sistema')) {
+        await menuSistema();
+        return true;
+    }
+
     // Lógica Genérica para opções ainda não criadas
     console.log(chalk.yellow(`\nVocê escolheu: ${option}`));
     console.log(chalk.gray('Funcionalidade em desenvolvimento...'));
 
-    // AQUI ESTÁ A MELHORIA DE UX:
-    // Em vez de sleep(), obrigamos o usuário a confirmar que leu
+    // Obrigamos o usuário a confirmar que leu
     await waitPressEnter();
 
     return true; // Continua o loop
-}
-
-// Função auxiliar apenas para pausar a tela
-async function waitPressEnter() {
-    console.log('');
-    await inquirer.prompt([
-        {
-            type: 'input',
-            name: 'enter',
-            message: 'Pressione ENTER para voltar ao menu...',
-        }
-    ]);
 }
 
 mainMenu();

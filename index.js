@@ -4,28 +4,37 @@ import { menuRede } from './rede.js';
 import { menuSistema } from './sistema.js';
 import { waitPressEnter } from './utils.js';
 import { menuLimpeza } from './limpeza.js';
+import { isUserAdmin } from './utils.js';
 
 async function mainMenu() {
     let running = true;
 
     while (running) {
         console.clear();
-        console.log(chalk.green.bold('============================================='));
-        console.log(chalk.green.bold('       🚀 IT QUICKTOOLS - SUPORTE TI         '));
-        console.log(chalk.green.bold('============================================='));
+        // Renderização Condicional do Cabeçalho
+        if (isAdmin) {
+            console.log(chalk.green.bold('============================================='));
+            console.log(chalk.green.bold('    🚀 IT QUICKTOOLS (MODO ADMINISTRADOR)    '));
+            console.log(chalk.green.bold('============================================='));
+        } else {
+            console.log(chalk.yellow.bold('============================================='));
+            console.log(chalk.yellow.bold('    ⚠️  IT QUICKTOOLS (MODO RESTRITO)        '));
+            console.log(chalk.yellow.bold('============================================='));
+            console.log(chalk.red('Algumas funções de limpeza falharão sem Admin.'));
+        }
         console.log('');
 
         const answer = await inquirer.prompt([
             {
-                type: 'list', // Lembre-se: use 'rawlist' se 'list' der bug
+                type: 'list',
                 name: 'category',
                 message: 'Selecione uma categoria:',
                 pageSize: 10,
                 choices: [
                     '🌐 Rede (IP, DNS, Ping, Tracert)',
                     '💻 Sistema (Info, Usuários, Domínio)',
+                    isAdmin ? '🧹 Limpeza (Cache, Temp, Lixeira)' : '🧹 Limpeza (⚠️ Limitado)',
                     '🩺 Diagnóstico (Eventos, Memória)',
-                    '🧹 Limpeza (Cache, Temp, Lixeira)',
                     '⚙️  Scripts Avançados (SFC, DISM)',
                     new inquirer.Separator(),
                     '❌ Sair'
@@ -48,8 +57,6 @@ async function handleChoice(option) {
     // Lógica de Rede
     if (option.includes('Rede')) {
         await menuRede();
-        // Não precisamos de pausa aqui pois o próprio menuRede já tem interações
-        // e quando ele termina, ele volta para cá
         return true;
     }
 
@@ -59,11 +66,17 @@ async function handleChoice(option) {
         return true;
     }
 
+    // Lógica de Limpeza
+    if (option.includes('Limpeza')) {
+        await menuLimpeza();
+        return true;
+    }
+
     // Lógica Genérica para opções ainda não criadas
     console.log(chalk.yellow(`\nVocê escolheu: ${option}`));
     console.log(chalk.gray('Funcionalidade em desenvolvimento...'));
 
-    // Obrigamos o usuário a confirmar que leu
+    // Obriga o usuário a pressionar ENTER para continuar
     await waitPressEnter();
 
     return true; // Continua o loop

@@ -1,6 +1,7 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
+import { waitPressEnter } from './utils.js';
 
 export async function menuSistema() {
     let inSubMenu = true;
@@ -68,15 +69,4 @@ async function runSystemCommand(action) {
     }
 
     await waitPressEnter();
-}
-
-async function waitPressEnter() {
-    console.log('');
-    await inquirer.prompt([
-        {
-            type: 'input',
-            name: 'enter',
-            message: 'Pressione ENTER para continuar...',
-        }
-    ]);
 }

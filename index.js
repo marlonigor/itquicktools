@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { menuRede } from './rede.js';
 import { menuSistema } from './sistema.js';
 import { waitPressEnter } from './utils.js';
+import { menuLimpeza } from './limpeza.js';
 
 async function mainMenu() {
     let running = true;

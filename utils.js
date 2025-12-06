@@ -1,8 +1,9 @@
 import inquirer from 'inquirer';
+import shell from 'shelljs';
 
 // Verifica se o usuário tem privilégios de administrador
 export function isUserAdmin() {
-    const result = ShellString.exec('net session', { silent: true });
+    const result = shell.exec('net session', { silent: true });
     return result.code === 0;
 }
 

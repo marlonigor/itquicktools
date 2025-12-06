@@ -2,12 +2,15 @@ import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { menuRede } from './rede.js';
 import { menuSistema } from './sistema.js';
-import { waitPressEnter } from './utils.js';
 import { menuLimpeza } from './limpeza.js';
-import { isUserAdmin } from './utils.js';
+import { menuDiagnostico } from './diagnostico.js';
+import { waitPressEnter, isUserAdmin } from './utils.js';
+
 
 async function mainMenu() {
     let running = true;
+
+    const isAdmin = isUserAdmin();
 
     while (running) {
         console.clear();

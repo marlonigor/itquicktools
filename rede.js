@@ -18,6 +18,7 @@ export async function menuRede() {
                 type: 'list', // Se der bug, mude para 'rawlist'
                 name: 'action',
                 message: 'Ferramentas de Rede:',
+                pageSize: 10,
                 choices: [
                     '📝 Mostrar IP (ipconfig)',
                     '🧹 Limpar Cache DNS (flushdns)',

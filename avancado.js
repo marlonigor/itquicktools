@@ -30,6 +30,7 @@ export async function menuAvancado() {
                 type: 'list',
                 name: 'action',
                 message: 'Ferramentas de Reparo:',
+                pageSize: 10,
                 choices: [
                     '🚑 Verificar Integridade (SFC Scan)',
                     '🏥 Verificar Imagem do Windows (DISM Check)',

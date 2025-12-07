@@ -18,6 +18,7 @@ export async function menuSistema() {
                 type: 'list',
                 name: 'action',
                 message: 'Informações do Sistema:',
+                pageSize: 10,
                 choices: [
                     '🆔 Hostname e Usuário Atual',
                     '🔢 Serial Number (BIOS)',
@@ -41,6 +42,8 @@ export async function menuSistema() {
 async function runSystemCommand(action) {
     console.log('');
 
+    const runPS = (cmd) => shell.exec(`powershell -Command "${cmd}"`);
+
     switch (action) {
         case '🆔 Hostname e Usuário Atual':
             console.log(chalk.cyan('Obtendo identificação...'));
@@ -51,20 +54,20 @@ async function runSystemCommand(action) {
 
         case '🔢 Serial Number (BIOS)':
             console.log(chalk.cyan('Lendo BIOS...'));
-            // Comando WMIC para pegar o serial da máquina (Dell/HP/Lenovo)
-            shell.exec('wmic bios get serialnumber');
+            runPS('Get-CimInstance Win32_Bios | Select-Object -ExpandProperty SerialNumber');
+            runPS('Get-CimInstance Win32_Bios | Select-Object -ExpandProperty Manufacturer');
             break;
 
         case '🪟 Versão do Windows':
             console.log(chalk.cyan('Verificando build do Windows...'));
-            // Pega o nome amigável do OS
-            shell.exec('wmic os get caption, version');
+            runPS('Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption');
+            runPS('Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Version');
+            runPS('Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber');
             break;
 
         case '📂 Listar Discos/Partições':
             console.log(chalk.cyan('Listando volumes lógicos...'));
-            // Mostra C:, D:, etc e espaço livre
-            shell.exec('wmic logicaldisk get deviceid, volumename, size, freespace');
+            runPS('Get-CimInstance Win32_LogicalDisk | Select-Object -ExpandProperty DeviceID, VolumeName, Size, FreeSpace -AutoSize');
             break;
     }
 

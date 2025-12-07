@@ -6,9 +6,10 @@ import { menuLimpeza } from './limpeza.js';
 import { menuDiagnostico } from './diagnostico.js';
 import { menuAvancado } from './avancado.js';
 import { waitPressEnter, isUserAdmin } from './utils.js';
-
+import shell from 'shelljs';
 
 async function mainMenu() {
+
     let running = true;
 
     const isAdmin = isUserAdmin();

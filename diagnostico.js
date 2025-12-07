@@ -19,6 +19,7 @@ export async function menuDiagnostico() {
                 type: 'list',
                 name: 'action',
                 message: 'Ferramenta de Diagnóstico:',
+                pageSize: 10,
                 choices: [
                     '📊 Gerenciador de Tarefas (Task Manager)',
                     '📜 Visualizador de Eventos (Event Viewer)',

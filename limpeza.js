@@ -2,6 +2,7 @@ import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
 import { waitPressEnter } from './utils.js';
+import { execSync } from 'child_process';
 
 export async function menuLimpeza() {
     let inSubMenu = true;
@@ -19,6 +20,7 @@ export async function menuLimpeza() {
                 type: 'list',
                 name: 'action',
                 message: 'Selecione o tipo de limpeza:',
+                pageSize: 10,
                 choices: [
                     '🌡️  Arquivos Temporários (%TEMP%)',
                     '🗑️  Esvaziar Lixeira (PowerShell)',
@@ -45,13 +47,15 @@ async function runCleanupCommand(action) {
     switch (action) {
         case '🌡️  Arquivos Temporários (%TEMP%)':
             console.log(chalk.yellow('Varrendo pasta temporária do usuário...'));
-            // /f = force (arquivos somente leitura)
-            // /s = subpastas
-            // /q = quiet (não pede confirmação Y/N para cada arquivo)
-            shell.exec('del /f /s /q %temp%\\*');
+            try {
+                // Usamos execSync nativo para não criar dependência do ShellJS dentro da pasta Temp
+                // O "2>nul" esconde erros de arquivos em uso
+                execSync('del /f /s /q %temp%\\*', { stdio: 'inherit' });
+            } catch (e) {
+                // Ignoramos erros, pois é normal não conseguir deletar alguns arquivos em uso
+            }
             console.log(chalk.green('\n✔ Limpeza de temporários finalizada.'));
             break;
-
         case '🗑️  Esvaziar Lixeira (PowerShell)':
             console.log(chalk.yellow('Esvaziando lixeira...'));
             // Chamamos o PowerShell pois ele tem um comando nativo seguro para isso

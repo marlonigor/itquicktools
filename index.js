@@ -4,6 +4,7 @@ import { menuRede } from './rede.js';
 import { menuSistema } from './sistema.js';
 import { menuLimpeza } from './limpeza.js';
 import { menuDiagnostico } from './diagnostico.js';
+import { menuAvancado } from './avancado.js';
 import { waitPressEnter, isUserAdmin } from './utils.js';
 
 
@@ -72,6 +73,18 @@ async function handleChoice(option) {
     // Lógica de Limpeza
     if (option.includes('Limpeza')) {
         await menuLimpeza();
+        return true;
+    }
+
+    // Lógica de Diagnóstico
+    if (option.includes('Diagnóstico')) {
+        await menuDiagnostico();
+        return true;
+    }
+
+    // Lógica de Scripts Avançados
+    if (option.includes('Scripts Avançados')) {
+        await menuAvancado();
         return true;
     }
 

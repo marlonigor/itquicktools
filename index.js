@@ -5,6 +5,7 @@ import { menuSistema } from './sistema.js';
 import { menuLimpeza } from './limpeza.js';
 import { menuDiagnostico } from './diagnostico.js';
 import { menuAvancado } from './avancado.js';
+import { menuAtualizacoes } from './atualizacoes.js';
 import { waitPressEnter, isUserAdmin } from './utils.js';
 import { showBanner } from './banner.js';
 
@@ -37,6 +38,7 @@ async function mainMenu() {
                 choices: [
                     '🌐 Rede (IP, DNS, Ping, Tracert)',
                     '💻 Sistema (Info, Usuários, Domínio)',
+                    '🔄 Atualizações (Winget, Windows Update)',
                     isAdmin ? '🧹 Limpeza (Cache, Temp, Lixeira)' : '🧹 Limpeza (⚠️ Limitado)',
                     '🩺 Diagnóstico (Eventos, Memória)',
                     '⚙️  Scripts Avançados (SFC, DISM)',
@@ -67,6 +69,12 @@ async function handleChoice(option) {
     // Lógica de Sistema
     if (option.includes('Sistema')) {
         await menuSistema();
+        return true;
+    }
+
+    // Lógica de Atualizações
+    if (option.includes('Atualizações')) {
+        await menuAtualizacoes();
         return true;
     }
 

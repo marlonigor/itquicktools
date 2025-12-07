@@ -20,6 +20,8 @@
   "homepage": "https://github.com/marlonigor/itquicktools#readme",
   "dependencies": {
     "chalk": "^5.6.2",
+    "figlet": "^1.9.4",
+    "gradient-string": "^3.0.0",
     "inquirer": "^9.2.12",
     "shelljs": "^0.10.0"
   }

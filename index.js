@@ -6,6 +6,7 @@ import { menuLimpeza } from './limpeza.js';
 import { menuDiagnostico } from './diagnostico.js';
 import { menuAvancado } from './avancado.js';
 import { waitPressEnter, isUserAdmin } from './utils.js';
+import { showBanner } from './banner.js';
 
 async function mainMenu() {
 
@@ -14,18 +15,17 @@ async function mainMenu() {
     const isAdmin = isUserAdmin();
 
     while (running) {
-        console.clear();
-        // Renderização Condicional do Cabeçalho
+        console.clear()
+
+        showBanner();
+
         if (isAdmin) {
-            console.log(chalk.green.bold('============================================='));
-            console.log(chalk.green.bold('    🚀 IT QUICKTOOLS (MODO ADMINISTRADOR)    '));
-            console.log(chalk.green.bold('============================================='));
+            console.log(chalk.green.bold('          🚀 MODO ADMINISTRADOR ATIVO'));
         } else {
-            console.log(chalk.yellow.bold('============================================='));
-            console.log(chalk.yellow.bold('    ⚠️  IT QUICKTOOLS (MODO RESTRITO)        '));
-            console.log(chalk.yellow.bold('============================================='));
-            console.log(chalk.red('Algumas funções de limpeza falharão sem Admin.'));
+            console.log(chalk.yellow.bold('          ⚠️  MODO RESTRITO (SEM ADMIN)'));
+            console.log(chalk.red('          Algumas funções falharão.'));
         }
+        console.log(chalk.gray('================================================================'));
         console.log('');
 
         const answer = await inquirer.prompt([

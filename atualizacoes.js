@@ -21,6 +21,7 @@ export async function menuAtualizacoes() {
                 pageSize: 10,
                 choices: [
                     '📦 Atualizar Todos os Programas (Winget)',
+                    '🛡️  Atualizar Definições de Vírus (Defender)',
                     '🪟 Verificar Windows Update (Dispara Scan)',
                     new inquirer.Separator(),
                     '🔙 Voltar ao Menu Principal'
@@ -43,24 +44,33 @@ async function runUpdateCommand(action) {
     if (action.includes('Winget')) {
         console.log(chalk.cyan('Iniciando Winget Upgrade All...'));
         console.log(chalk.gray('--------------------------------------------------'));
-
-        // Winget já é verboso por natureza, mantemos assim
         shell.exec('winget upgrade --all --include-unknown');
-
         console.log(chalk.gray('--------------------------------------------------'));
         console.log(chalk.green('✔ Processo do Winget finalizado.'));
     }
+    else if (action.includes('Defender')) {
+        console.log(chalk.cyan('Contatando Microsoft Protection Center...'));
+        console.log(chalk.gray('Executando MpCmdRun.exe -SignatureUpdate'));
+
+        // Tenta rodar o utilitário do Defender.
+        // O caminho geralmente é padrão, mas usamos aspas por causa dos espaços.
+        const cmd = '"%ProgramFiles%\\Windows Defender\\MpCmdRun.exe" -SignatureUpdate';
+
+        const res = shell.exec(cmd, { silent: false });
+
+        if (res.code === 0) {
+            console.log(chalk.green('\n✔ Definições de vírus atualizadas com sucesso!'));
+        } else {
+            console.log(chalk.red('\n❌ Falha ao atualizar. Verifique sua conexão ou se é Admin.'));
+        }
+    }
     else if (action.includes('Windows Update')) {
         console.log(chalk.cyan('Contatando Windows Update Agent (USOClient)...'));
-
-        // Este comando infelizmente não tem output visual (é silencioso por design da Microsoft)
-        // Mas não vamos esconder nada.
         const res = shell.exec('usoclient StartScan');
 
         if (res.code === 0) {
             console.log(chalk.green('✔ Sinal de verificação enviado com sucesso.'));
             console.log(chalk.yellow('Nota: O Windows Update fará o download em segundo plano.'));
-            console.log(chalk.yellow('      Verifique as Configurações do Windows para detalhes.'));
         } else {
             console.log(chalk.red('❌ Erro ao invocar o cliente de update.'));
         }

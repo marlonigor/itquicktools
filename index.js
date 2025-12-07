@@ -41,7 +41,7 @@ async function mainMenu() {
                     '🔄 Atualizações (Winget, Windows Update)',
                     isAdmin ? '🧹 Limpeza (Cache, Temp, Lixeira)' : '🧹 Limpeza (⚠️ Limitado)',
                     '🩺 Diagnóstico (Eventos, Memória)',
-                    '⚙️  Scripts Avançados (SFC, DISM)',
+                    '⚙️ Scripts Avançados (SFC, DISM)',
                     new inquirer.Separator(),
                     '❌ Sair'
                 ]

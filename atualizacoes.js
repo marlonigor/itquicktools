@@ -21,7 +21,7 @@ export async function menuAtualizacoes() {
                 pageSize: 10,
                 choices: [
                     '📦 Atualizar Todos os Programas (Winget)',
-                    '🛡️  Atualizar Definições de Vírus (Defender)',
+                    '🛡️ Atualizar Definições de Vírus (Defender)',
                     '🪟 Verificar Windows Update (Dispara Scan)',
                     new inquirer.Separator(),
                     '🔙 Voltar ao Menu Principal'

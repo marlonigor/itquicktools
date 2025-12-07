@@ -20,7 +20,7 @@ export async function menuAvancado() {
     while (inSubMenu) {
         console.clear();
         console.log(chalk.red.bold('============================================='));
-        console.log(chalk.red.bold('       ⚙️  SCRIPTS AVANÇADOS (ADMIN)         '));
+        console.log(chalk.red.bold('       ⚙️ SCRIPTS AVANÇADOS (ADMIN)         '));
         console.log(chalk.red.bold('============================================='));
         console.log(chalk.gray('Nota: Estes processos podem demorar vários minutos.'));
         console.log('');

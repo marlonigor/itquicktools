@@ -2,6 +2,7 @@ import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
 import { waitPressEnter } from './utils.js';
+import { execSync } from 'child_process';
 
 export async function menuLimpeza() {
     let inSubMenu = true;
@@ -48,10 +49,15 @@ async function runCleanupCommand(action) {
 
     switch (action) {
         case '🌡️  Arquivos Temporários (%TEMP%)':
-            console.log(chalk.cyan('Iniciando varredura em %TEMP%...'));
-            // O comando del nativo mostra os arquivos sendo apagados
-            runVerbose('del /f /s /q %temp%\\*');
-            console.log(chalk.green('\n✔ Varredura finalizada.'));
+            console.log(chalk.yellow('Varrendo pasta temporária do usuário...'));
+            try {
+                // Usamos execSync nativo para não criar dependência do ShellJS dentro da pasta Temp
+                // O "2>nul" esconde erros de arquivos em uso
+                execSync('del /f /s /q %temp%\\*', { stdio: 'inherit' });
+            } catch (e) {
+                // Ignoramos erros, pois é normal não conseguir deletar alguns arquivos em uso
+            }
+            console.log(chalk.green('\n✔ Limpeza de temporários finalizada.'));
             break;
 
         case '🗑️  Esvaziar Lixeira (PowerShell)':

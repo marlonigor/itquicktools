@@ -26,8 +26,9 @@ export function showBanner() {
 
         // Aplica o gradiente arco-íris e imprime
         console.log(gradient.rainbow.multiline(ascii));
+        console.log('');
     } catch (err) {
-        // Fallback caso a fonte falhe: imprime simples
+        // Fallback
         console.log(gradient.rainbow(text));
         console.error('Erro ao carregar banner:', err.message);
     }

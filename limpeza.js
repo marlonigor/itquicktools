@@ -1,6 +1,7 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
+import ora from 'ora';
 import { waitPressEnter } from './utils.js';
 import { execSync } from 'child_process';
 
@@ -41,51 +42,63 @@ export async function menuLimpeza() {
     }
 }
 
+async function execWithSpinner(command, startText, successText) {
+    const spinner = ora(startText).start();
+
+    return new Promise((resolve) => {
+        // { async: true } permite que o Node continue rodando a animação do spinner
+        // silent: true esconde o output feio do comando (ex: "deleted file x...")
+        shell.exec(command, { async: true, silent: true }, (code, stdout, stderr) => {
+            if (code === 0) {
+                spinner.succeed(chalk.green(successText));
+            } else {
+                spinner.fail(chalk.red('Ocorreu um erro ou falta permissão.'));
+                // Opcional: mostrar o erro se falhar
+                // console.error(stderr); 
+            }
+            resolve(code);
+        });
+    });
+}
+
 async function runCleanupCommand(action) {
     console.log('');
 
     switch (action) {
         case '🌡️  Arquivos Temporários (%TEMP%)':
-            console.log(chalk.yellow('Varrendo pasta temporária do usuário...'));
-            try {
-                // Usamos execSync nativo para não criar dependência do ShellJS dentro da pasta Temp
-                // O "2>nul" esconde erros de arquivos em uso
-                execSync('del /f /s /q %temp%\\*', { stdio: 'inherit' });
-            } catch (e) {
-                // Ignoramos erros, pois é normal não conseguir deletar alguns arquivos em uso
-            }
-            console.log(chalk.green('\n✔ Limpeza de temporários finalizada.'));
+            await execWithSpinner(
+                'del /f /s /q %temp%\\*',
+                'Varrendo e deletando arquivos temporários...',
+                'Limpeza de temporários concluída!'
+            );
             break;
+
         case '🗑️  Esvaziar Lixeira (PowerShell)':
-            console.log(chalk.yellow('Esvaziando lixeira...'));
-            // Chamamos o PowerShell pois ele tem um comando nativo seguro para isso
-            shell.exec('powershell.exe -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"');
-            console.log(chalk.green('✔ Lixeira processada.'));
+            await execWithSpinner(
+                'powershell.exe -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"',
+                'Esvaziando a lixeira...',
+                'Lixeira esvaziada com sucesso.'
+            );
             break;
 
         case '🚀 Cache do Windows (Prefetch - Requer Admin)':
-            console.log(chalk.yellow('Limpando pasta Prefetch...'));
-            const resPrefetch = shell.exec('del /f /s /q C:\\Windows\\Prefetch\\*');
-            if (resPrefetch.code !== 0) {
-                console.log(chalk.red('❌ Falha: Provavelmente falta permissão de Administrador.'));
-            } else {
-                console.log(chalk.green('✔ Prefetch limpo.'));
-            }
+            await execWithSpinner(
+                'del /f /s /q C:\\Windows\\Prefetch\\*',
+                'Limpando pasta Prefetch...',
+                'Cache Prefetch limpo.'
+            );
             break;
 
         case '💾 Cache do Windows Update (Requer Admin)':
-            console.log(chalk.red('⚠ Atenção: Isso reiniciará o serviço do Windows Update.'));
-            console.log(chalk.cyan('Parando serviço wuauserv...'));
-            shell.exec('net stop wuauserv');
+            console.log(chalk.cyan('Iniciando manutenção do Windows Update...'));
 
-            console.log(chalk.cyan('Apagando cache de downloads...'));
-            shell.exec('rd /s /q C:\\Windows\\SoftwareDistribution\\Download');
-            // Recria a pasta vazia para evitar erros futuros
-            shell.exec('mkdir C:\\Windows\\SoftwareDistribution\\Download');
+            // Aqui usamos sequencialmente pois um depende do outro
+            await execWithSpinner('net stop wuauserv', 'Parando serviço Windows Update...', 'Serviço parado.');
+            await execWithSpinner('rd /s /q C:\\Windows\\SoftwareDistribution\\Download', 'Apagando arquivos de cache...', 'Cache deletado.');
+            shell.exec('mkdir C:\\Windows\\SoftwareDistribution\\Download', { silent: true }); // recria pasta rapidinho
+            await execWithSpinner('net start wuauserv', 'Reiniciando serviço...', 'Serviço reiniciado.');
 
-            console.log(chalk.cyan('Reiniciando serviço wuauserv...'));
-            shell.exec('net start wuauserv');
-            console.log(chalk.green('✔ Manutenção do Windows Update concluída.'));
+            console.log(chalk.green('✔ Processo completo.'));
             break;
     }
 

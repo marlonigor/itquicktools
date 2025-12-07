@@ -23,7 +23,6 @@
     "figlet": "^1.9.4",
     "gradient-string": "^3.0.0",
     "inquirer": "^9.2.12",
-    "ora": "^9.0.0",
     "shelljs": "^0.10.0"
   }
 }

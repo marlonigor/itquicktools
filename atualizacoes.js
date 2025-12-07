@@ -1,7 +1,6 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import ora from 'ora';
 import { waitPressEnter } from './utils.js';
 
 export async function menuAtualizacoes() {
@@ -42,29 +41,29 @@ async function runUpdateCommand(action) {
     console.log('');
 
     if (action.includes('Winget')) {
-        console.log(chalk.cyan('Verificando pacotes instalados via Winget...'));
-        console.log(chalk.gray('O sistema verificará e baixará atualizações para seus programas.'));
-        console.log(chalk.gray('Acompanhe o progresso abaixo:'));
-        console.log('');
+        console.log(chalk.cyan('Iniciando Winget Upgrade All...'));
+        console.log(chalk.gray('--------------------------------------------------'));
 
-        // Winget roda de forma síncrona aqui para que o usuário veja as barras de progresso nativas
-        // --include-unknown tenta atualizar mesmo apps que o winget não tem certeza absoluta da versão
+        // Winget já é verboso por natureza, mantemos assim
         shell.exec('winget upgrade --all --include-unknown');
 
-        console.log(chalk.green('\n✔ Processo do Winget finalizado.'));
+        console.log(chalk.gray('--------------------------------------------------'));
+        console.log(chalk.green('✔ Processo do Winget finalizado.'));
     }
     else if (action.includes('Windows Update')) {
-        const spinner = ora('Solicitando verificação ao Windows Update Agent...').start();
+        console.log(chalk.cyan('Contatando Windows Update Agent (USOClient)...'));
 
-        // Dispara o scan em background
-        shell.exec('usoclient StartScan', { silent: true });
+        // Este comando infelizmente não tem output visual (é silencioso por design da Microsoft)
+        // Mas não vamos esconder nada.
+        const res = shell.exec('usoclient StartScan');
 
-        // Pausa dramática para UX
-        await new Promise(r => setTimeout(r, 2000));
-
-        spinner.succeed(chalk.green('Solicitação enviada com sucesso!'));
-        console.log(chalk.yellow('\nNota: O Windows baixará as atualizações em segundo plano.'));
-        console.log(chalk.yellow('Verifique as "Configurações > Windows Update" se quiser acompanhar.'));
+        if (res.code === 0) {
+            console.log(chalk.green('✔ Sinal de verificação enviado com sucesso.'));
+            console.log(chalk.yellow('Nota: O Windows Update fará o download em segundo plano.'));
+            console.log(chalk.yellow('      Verifique as Configurações do Windows para detalhes.'));
+        } else {
+            console.log(chalk.red('❌ Erro ao invocar o cliente de update.'));
+        }
     }
 
     await waitPressEnter();

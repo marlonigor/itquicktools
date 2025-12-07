@@ -1,9 +1,7 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import ora from 'ora';
 import { waitPressEnter } from './utils.js';
-import { execSync } from 'child_process';
 
 export async function menuLimpeza() {
     let inSubMenu = true;
@@ -42,67 +40,52 @@ export async function menuLimpeza() {
     }
 }
 
-async function execWithSpinner(command, startText, successText) {
-    const spinner = ora(startText).start();
-
-    return new Promise((resolve) => {
-        // { async: true } permite que o Node continue rodando a animação do spinner
-        // silent: true esconde o output feio do comando (ex: "deleted file x...")
-        shell.exec(command, { async: true, silent: true }, (code, stdout, stderr) => {
-            if (code === 0) {
-                spinner.succeed(chalk.green(successText));
-            } else {
-                spinner.fail(chalk.red('Ocorreu um erro ou falta permissão.'));
-                // Opcional: mostrar o erro se falhar
-                // console.error(stderr); 
-            }
-            resolve(code);
-        });
-    });
-}
-
 async function runCleanupCommand(action) {
     console.log('');
 
+    // Função auxiliar para rodar comandos mostrando tudo na tela
+    const runVerbose = (cmd) => shell.exec(cmd, { silent: false });
+
     switch (action) {
         case '🌡️  Arquivos Temporários (%TEMP%)':
-            await execWithSpinner(
-                'del /f /s /q %temp%\\*',
-                'Varrendo e deletando arquivos temporários...',
-                'Limpeza de temporários concluída!'
-            );
+            console.log(chalk.cyan('Iniciando varredura em %TEMP%...'));
+            // O comando del nativo mostra os arquivos sendo apagados
+            runVerbose('del /f /s /q %temp%\\*');
+            console.log(chalk.green('\n✔ Varredura finalizada.'));
             break;
 
         case '🗑️  Esvaziar Lixeira (PowerShell)':
-            await execWithSpinner(
-                'powershell.exe -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"',
-                'Esvaziando a lixeira...',
-                'Lixeira esvaziada com sucesso.'
-            );
+            console.log(chalk.cyan('Esvaziando Lixeira...'));
+            // PowerShell não é muito verboso por padrão neste comando, mas vamos executar direto
+            runVerbose('powershell.exe -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"');
+            console.log(chalk.green('✔ Lixeira processada.'));
             break;
 
         case '🚀 Cache do Windows (Prefetch - Requer Admin)':
-            await execWithSpinner(
-                'del /f /s /q C:\\Windows\\Prefetch\\*',
-                'Limpando pasta Prefetch...',
-                'Cache Prefetch limpo.'
-            );
+            console.log(chalk.cyan('Limpando pasta Prefetch...'));
+            const res = runVerbose('del /f /s /q C:\\Windows\\Prefetch\\*');
+
+            if (res.code !== 0) {
+                console.log(chalk.red('\n❌ Erro: Verifique se você está rodando como Administrador.'));
+            } else {
+                console.log(chalk.green('\n✔ Prefetch limpo.'));
+            }
             break;
 
         case '💾 Cache do Windows Update (Requer Admin)':
-            console.log(chalk.cyan('Iniciando manutenção do Windows Update...'));
+            console.log(chalk.cyan('--- Parando serviço Windows Update ---'));
+            runVerbose('net stop wuauserv');
 
-            // Aqui usamos sequencialmente pois um depende do outro
-            await execWithSpinner('net stop wuauserv', 'Parando serviço Windows Update...', 'Serviço parado.');
-            await execWithSpinner('rd /s /q C:\\Windows\\SoftwareDistribution\\Download', 'Apagando arquivos de cache...', 'Cache deletado.');
-            shell.exec('mkdir C:\\Windows\\SoftwareDistribution\\Download', { silent: true }); // recria pasta rapidinho
-            await execWithSpinner('net start wuauserv', 'Reiniciando serviço...', 'Serviço reiniciado.');
+            console.log(chalk.cyan('\n--- Apagando arquivos de cache ---'));
+            runVerbose('rd /s /q C:\\Windows\\SoftwareDistribution\\Download');
+            shell.exec('mkdir C:\\Windows\\SoftwareDistribution\\Download', { silent: true });
 
-            console.log(chalk.green('✔ Processo completo.'));
+            console.log(chalk.cyan('\n--- Reiniciando serviço Windows Update ---'));
+            runVerbose('net start wuauserv');
+
+            console.log(chalk.green('\n✔ Manutenção do Windows Update concluída.'));
             break;
     }
 
     await waitPressEnter();
-
-
 }

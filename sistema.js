@@ -54,20 +54,17 @@ async function runSystemCommand(action) {
 
         case '🔢 Serial Number (BIOS)':
             console.log(chalk.cyan('Lendo BIOS...'));
-            runPS('Get-CimInstance Win32_Bios | Select-Object -ExpandProperty SerialNumber');
-            runPS('Get-CimInstance Win32_Bios | Select-Object -ExpandProperty Manufacturer');
+            runPS('Get-CimInstance Win32_Bios | Select-Object SerialNumber, Manufacturer | Format-Table -AutoSize');
             break;
 
         case '🪟 Versão do Windows':
             console.log(chalk.cyan('Verificando build do Windows...'));
-            runPS('Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Caption');
-            runPS('Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty Version');
-            runPS('Get-CimInstance Win32_OperatingSystem | Select-Object -ExpandProperty BuildNumber');
+            runPS('Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber | Format-Table -AutoSize');
             break;
 
         case '📂 Listar Discos/Partições':
             console.log(chalk.cyan('Listando volumes lógicos...'));
-            runPS('Get-CimInstance Win32_LogicalDisk | Select-Object -ExpandProperty DeviceID, VolumeName, Size, FreeSpace -AutoSize');
+            runPS('Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID, VolumeName, Size, FreeSpace | Format-Table -AutoSize');
             break;
     }
 

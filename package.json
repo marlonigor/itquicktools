@@ -1,16 +1,24 @@
 {
   "name": "itquicktools",
   "version": "1.0.0",
-  "description": "",
+  "description": "Ferramenta CLI interativa para administracao rapida do Windows",
   "main": "index.js",
+  "bin": {
+    "itquicktools": "./index.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marlonigor/itquicktools.git"
   },
-  "keywords": [],
+  "keywords": [
+    "cli",
+    "windows",
+    "sysadmin",
+    "tools"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",

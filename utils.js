@@ -4,10 +4,12 @@ import chalk from 'chalk';
 
 /**
  * Checa se o processo atual possui privilegios de Administrador.
+ * Permite injecao de funcao executora para viabilizar testes unitarios isolados.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos de sistema.
  * @returns {boolean} True se tiver privilegios elevados, false caso contrario.
  */
-export function isUserAdmin() {
-    const result = shell.exec('net session', { silent: true });
+export function isUserAdmin(execFn = shell.exec) {
+    const result = execFn('net session', { silent: true });
     return result.code === 0;
 }
 

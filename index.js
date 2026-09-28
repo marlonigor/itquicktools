@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+import path from 'path';
+import { fileURLToPath } from 'url';
 import inquirer from 'inquirer';
 import chalk from 'chalk';
 import { menuRede } from './rede.js';
@@ -27,7 +30,7 @@ function renderAdminStatus(isAdmin) {
     console.log(chalk.red('          Algumas funcoes requerem elevacao de privilegios.'));
 }
 
-function buildMainMenuChoices(isAdmin) {
+export function buildMainMenuChoices(isAdmin) {
     const cleanupLabel = isAdmin
         ? '[4] Limpeza (Cache, Temp, Lixeira)'
         : '[4] Limpeza (Modo Restrito - Sem Admin)';
@@ -57,7 +60,7 @@ async function promptCategory(isAdmin) {
     return answer.category;
 }
 
-async function handleChoice(category) {
+export async function handleChoice(category) {
     if (category === 'sair') {
         console.log(chalk.red('\nSaindo... Operacoes finalizadas.'));
         return false;
@@ -74,7 +77,16 @@ async function handleChoice(category) {
     return true;
 }
 
-async function mainMenu() {
+function shouldRunDirectly() {
+    if (!process.argv[1]) {
+        return false;
+    }
+    const invokedPath = path.resolve(process.argv[1]).toLowerCase();
+    const currentPath = fileURLToPath(import.meta.url).toLowerCase();
+    return invokedPath === currentPath;
+}
+
+export async function mainMenu() {
     let running = true;
     const isAdmin = isUserAdmin();
 
@@ -89,4 +101,6 @@ async function mainMenu() {
     }
 }
 
-mainMenu();
+if (shouldRunDirectly()) {
+    mainMenu();
+}

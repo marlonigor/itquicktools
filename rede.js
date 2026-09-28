@@ -1,91 +1,80 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
+import { waitPressEnter, showModuleHeader } from './utils.js';
 
-// Exportamos a função principal deste módulo
+const networkChoices = [
+    { name: '[1] Mostrar IP (ipconfig)', value: 'ipconfig' },
+    { name: '[2] Limpar Cache DNS (flushdns)', value: 'flushdns' },
+    { name: '[3] Teste de Conexao (Ping Google DNS)', value: 'ping' },
+    { name: '[4] Rota de Pacotes (Tracert Google DNS)', value: 'tracert' },
+    new inquirer.Separator(),
+    { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
+];
+
+function executeIpConfig() {
+    console.log(chalk.cyan('Executando ipconfig...'));
+    shell.exec('ipconfig');
+}
+
+function executeFlushDns() {
+    console.log(chalk.cyan('Limpando cache DNS...'));
+    const result = shell.exec('ipconfig /flushdns');
+    if (result.code === 0) {
+        console.log(chalk.green('\n[OK] Cache DNS limpo com sucesso!'));
+        return;
+    }
+    console.log(chalk.red('\n[ERRO] Falha ao limpar DNS. Verifique permissoes de Administrador.'));
+}
+
+function executePing() {
+    console.log(chalk.cyan('Executando ping para Google DNS (8.8.8.8)...'));
+    shell.exec('ping 8.8.8.8');
+}
+
+function executeTracert() {
+    console.log(chalk.cyan('Rastreando rota ate Google DNS (8.8.8.8)...'));
+    console.log(chalk.gray('Pressione Ctrl+C se desejar interromper o rastreamento.'));
+    shell.exec('tracert -d 8.8.8.8');
+}
+
+const networkActions = {
+    ipconfig: executeIpConfig,
+    flushdns: executeFlushDns,
+    ping: executePing,
+    tracert: executeTracert
+};
+
+async function dispatchNetworkAction(action) {
+    const handler = networkActions[action];
+    if (handler) {
+        console.log('');
+        handler();
+        await waitPressEnter();
+    }
+}
+
 export async function menuRede() {
     let inSubMenu = true;
 
     while (inSubMenu) {
-        console.clear();
-        console.log(chalk.blue.bold('============================================='));
-        console.log(chalk.blue.bold('          🌐 MÓDULO DE REDE                  '));
-        console.log(chalk.blue.bold('============================================='));
-        console.log('');
+        showModuleHeader('Modulo de Rede');
 
         const answer = await inquirer.prompt([
             {
-                type: 'list', // Se der bug, mude para 'rawlist'
+                type: 'list',
                 name: 'action',
                 message: 'Ferramentas de Rede:',
                 pageSize: 10,
-                choices: [
-                    '📝 Mostrar IP (ipconfig)',
-                    '🧹 Limpar Cache DNS (flushdns)',
-                    '📶 Teste de Conexão (Ping Google)',
-                    '🗺️  Rota de Pacotes (Tracert)',
-                    new inquirer.Separator(),
-                    '🔙 Voltar ao Menu Principal'
-                ]
+                choices: networkChoices
             }
         ]);
 
-        // Se escolher voltar, quebramos o loop deste submenu
-        if (answer.action.includes('Voltar')) {
+        if (answer.action === 'voltar') {
             inSubMenu = false;
-            return; // Retorna o controle para o index.js
+            return;
         }
 
-        // Executa a ação escolhida
-        await runNetworkCommand(answer.action);
+        await dispatchNetworkAction(answer.action);
     }
-}
-
-// Função auxiliar para organizar a execução dos comandos
-async function runNetworkCommand(action) {
-    console.log(''); // Pula linha
-
-    switch (action) {
-        case '📝 Mostrar IP (ipconfig)':
-            console.log(chalk.cyan('Executando ipconfig...'));
-            shell.exec('ipconfig');
-            break;
-
-        case '🧹 Limpar Cache DNS (flushdns)':
-            console.log(chalk.cyan('Limpando DNS...'));
-            // Tenta rodar e verifica se deu erro (código !== 0)
-            const result = shell.exec('ipconfig /flushdns');
-            if (result.code === 0) {
-                console.log(chalk.green('\n✔ Cache DNS limpo com sucesso!'));
-            } else {
-                console.log(chalk.red('\n❌ Erro: Talvez você precise rodar como Administrador.'));
-            }
-            break;
-
-        case '📶 Teste de Conexão (Ping Google)':
-            console.log(chalk.cyan('Pingando Google DNS (8.8.8.8)...'));
-            shell.exec('ping 8.8.8.8');
-            break;
-
-        case '🗺️  Rota de Pacotes (Tracert)':
-            console.log(chalk.cyan('Rastreando rota até o Google (pode demorar)...'));
-            console.log(chalk.gray('Pressione Ctrl+C se quiser cancelar no meio.'));
-            shell.exec('tracert -d 8.8.8.8');
-            break;
-    }
-
-    // Pausa para o usuário ler o resultado antes de limpar a tela
-    await waitPressEnter();
-}
-
-// Função de pausa (igual a do index.js, mas local aqui)
-async function waitPressEnter() {
-    console.log('');
-    await inquirer.prompt([
-        {
-            type: 'input',
-            name: 'enter',
-            message: 'Pressione ENTER para continuar...',
-        }
-    ]);
 }

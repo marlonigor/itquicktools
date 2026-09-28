@@ -1,91 +1,63 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import { waitPressEnter } from './utils.js';
+import { waitPressEnter, showModuleHeader } from './utils.js';
+
+const diagnosticChoices = [
+    { name: '[1] Gerenciador de Tarefas (Task Manager)', value: 'taskmgr' },
+    { name: '[2] Visualizador de Eventos (Event Viewer)', value: 'eventvwr' },
+    { name: '[3] Diagnostico do DirectX (DxDiag)', value: 'dxdiag' },
+    { name: '[4] Gerenciador de Dispositivos (Device Manager)', value: 'devmgmt' },
+    { name: '[5] Monitor de Desempenho (PerfMon)', value: 'perfmon' },
+    { name: '[6] Diagnostico de Memoria (mdsched)', value: 'mdsched' },
+    new inquirer.Separator(),
+    { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
+];
+
+const diagnosticCommands = {
+    taskmgr: 'start taskmgr',
+    eventvwr: 'start eventvwr',
+    dxdiag: 'start dxdiag',
+    devmgmt: 'start devmgmt.msc',
+    perfmon: 'start perfmon',
+    mdsched: 'start mdsched.exe'
+};
+
+function launchDiagnosticTool(action) {
+    const cmd = diagnosticCommands[action];
+    if (!cmd) {
+        return;
+    }
+
+    console.log(chalk.cyan(`Iniciando utilitario: ${action}...`));
+    shell.exec(cmd);
+    console.log(chalk.green('[OK] Comando enviado ao sistema operacional.'));
+}
 
 export async function menuDiagnostico() {
     let inSubMenu = true;
 
     while (inSubMenu) {
-        console.clear();
-        console.log(chalk.cyan.bold('============================================='));
-        console.log(chalk.cyan.bold('         🩺 MÓDULO DE DIAGNÓSTICO            '));
-        console.log(chalk.cyan.bold('============================================='));
-        console.log(chalk.gray('Nota: Estas opções abrem janelas externas do Windows.'));
-        console.log('');
+        showModuleHeader('Modulo de Diagnostico');
+        console.log(chalk.gray('Nota: Estas opcoes abrem janelas externas do Windows.\n'));
 
         const answer = await inquirer.prompt([
             {
                 type: 'list',
                 name: 'action',
-                message: 'Ferramenta de Diagnóstico:',
+                message: 'Ferramentas de Diagnostico:',
                 pageSize: 10,
-                choices: [
-                    '📊 Gerenciador de Tarefas (Task Manager)',
-                    '📜 Visualizador de Eventos (Event Viewer)',
-                    '🎮 Diagnóstico do DirectX (DxDiag)',
-                    '🔌 Gerenciador de Dispositivos (Device Manager)',
-                    '📈 Monitor de Desempenho (PerfMon)',
-                    '🧠 Teste de Memória (Requer Reinício)',
-                    new inquirer.Separator(),
-                    '🔙 Voltar ao Menu Principal'
-                ]
+                choices: diagnosticChoices
             }
         ]);
 
-        if (answer.action.includes('Voltar')) {
+        if (answer.action === 'voltar') {
             inSubMenu = false;
             return;
         }
 
-        await runDiagnosticTool(answer.action);
+        console.log('');
+        launchDiagnosticTool(answer.action);
+        await waitPressEnter();
     }
-}
-
-async function runDiagnosticTool(action) {
-    console.log('');
-
-    // O comando 'start' abre a janela e libera o terminal imediatamente
-    let cmd = '';
-
-    switch (action) {
-        case '📊 Gerenciador de Tarefas (Task Manager)':
-            console.log(chalk.cyan('Abrindo Task Manager...'));
-            cmd = 'start taskmgr';
-            break;
-
-        case '📜 Visualizador de Eventos (Event Viewer)':
-            console.log(chalk.cyan('Abrindo Logs do Windows...'));
-            cmd = 'start eventvwr';
-            break;
-
-        case '🎮 Diagnóstico do DirectX (DxDiag)':
-            console.log(chalk.cyan('Carregando DxDiag (pode demorar)...'));
-            cmd = 'start dxdiag';
-            break;
-
-        case '🔌 Gerenciador de Dispositivos (Device Manager)':
-            console.log(chalk.cyan('Abrindo Gerenciador de Dispositivos...'));
-            // devmgmt.msc é um snap-in do console, precisa rodar direto
-            cmd = 'start devmgmt.msc';
-            break;
-
-        case '📈 Monitor de Desempenho (PerfMon)':
-            console.log(chalk.cyan('Abrindo Monitor de Desempenho...'));
-            cmd = 'start perfmon';
-            break;
-
-        case '🧠 Teste de Memória (Requer Reinício)':
-            console.log(chalk.yellow('Atenção: Isso abrirá a janela de agendamento de verificação.'));
-            cmd = 'start mdsched.exe';
-            break;
-    }
-
-    if (cmd) {
-        shell.exec(cmd);
-        console.log(chalk.green('✔ Comando enviado ao sistema.'));
-    }
-
-    // Pausa curta só para ler a mensagem de sucesso
-    await waitPressEnter();
 }

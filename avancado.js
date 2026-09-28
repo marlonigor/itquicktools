@@ -1,29 +1,76 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import { waitPressEnter, isUserAdmin } from './utils.js';
+import { waitPressEnter, isUserAdmin, showModuleHeader } from './utils.js';
+
+const advancedChoices = [
+    { name: '[1] Verificar Integridade (SFC Scan)', value: 'sfc' },
+    { name: '[2] Verificar Imagem do Windows (DISM Check)', value: 'dism_check' },
+    { name: '[3] Reparar Imagem do Windows (DISM Restore)', value: 'dism_restore' },
+    { name: '[4] Verificar Disco (CHKDSK - Somente Leitura)', value: 'chkdsk' },
+    new inquirer.Separator(),
+    { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
+];
+
+async function notifyAccessDenied() {
+    console.clear();
+    console.log(chalk.red.bold('[ACESSO NEGADO]'));
+    console.log(chalk.yellow('As ferramentas avancadas exigem privilegios de Administrador.'));
+    console.log(chalk.gray('Por favor, feche e abra o terminal com "Executar como Administrador".'));
+    await waitPressEnter();
+}
+
+function executeSfcScan() {
+    console.log(chalk.yellow('Iniciando System File Checker...'));
+    console.log(chalk.gray('Isso vai buscar e corrigir arquivos corrompidos do Windows.'));
+    console.log(chalk.cyan('Aguarde, este processo pode demorar alguns minutos...'));
+    shell.exec('sfc /scannow');
+}
+
+function executeDismCheck() {
+    console.log(chalk.yellow('Verificando saude da imagem do sistema...'));
+    shell.exec('dism /online /cleanup-image /checkhealth');
+}
+
+function executeDismRestore() {
+    console.log(chalk.red('[ATENCAO] Este processo baixa arquivos de reparo do Windows Update.'));
+    console.log(chalk.yellow('Iniciando reparo profundo da imagem...'));
+    shell.exec('dism /online /cleanup-image /restorehealth');
+}
+
+function executeChkdsk() {
+    console.log(chalk.cyan('Verificando sistema de arquivos (modo somente leitura)...'));
+    shell.exec('chkdsk');
+    console.log(chalk.gray('\nPara correcao completa agendada, execute "chkdsk /f /r" manualmente.'));
+}
+
+const advancedActions = {
+    sfc: executeSfcScan,
+    dism_check: executeDismCheck,
+    dism_restore: executeDismRestore,
+    chkdsk: executeChkdsk
+};
+
+async function dispatchAdvancedAction(action) {
+    const handler = advancedActions[action];
+    if (handler) {
+        console.log('');
+        handler();
+        await waitPressEnter();
+    }
+}
 
 export async function menuAvancado() {
-    // 🔒 BLOQUEIO DE SEGURANÇA
-    // Se não for Admin, expulsa do menu imediatamente.
     if (!isUserAdmin()) {
-        console.clear();
-        console.log(chalk.red.bold('⛔ ACESSO NEGADO'));
-        console.log(chalk.yellow('As ferramentas avançadas exigem privilégios de Administrador.'));
-        console.log(chalk.gray('Por favor, feche e abra o programa como "Executar como Administrador".'));
-        await waitPressEnter();
-        return; // Volta para o index.js
+        await notifyAccessDenied();
+        return;
     }
 
     let inSubMenu = true;
 
     while (inSubMenu) {
-        console.clear();
-        console.log(chalk.red.bold('============================================='));
-        console.log(chalk.red.bold('       ⚙️ SCRIPTS AVANÇADOS (ADMIN)         '));
-        console.log(chalk.red.bold('============================================='));
-        console.log(chalk.gray('Nota: Estes processos podem demorar vários minutos.'));
-        console.log('');
+        showModuleHeader('Scripts Avancados (Administrador)');
+        console.log(chalk.gray('Nota: Estes processos podem demorar varios minutos para concluir.\n'));
 
         const answer = await inquirer.prompt([
             {
@@ -31,56 +78,15 @@ export async function menuAvancado() {
                 name: 'action',
                 message: 'Ferramentas de Reparo:',
                 pageSize: 10,
-                choices: [
-                    '🚑 Verificar Integridade (SFC Scan)',
-                    '🏥 Verificar Imagem do Windows (DISM Check)',
-                    '💊 Reparar Imagem do Windows (DISM Restore)',
-                    '💾 Verificar Disco (CHKDSK - Leitura)',
-                    new inquirer.Separator(),
-                    '🔙 Voltar ao Menu Principal'
-                ]
+                choices: advancedChoices
             }
         ]);
 
-        if (answer.action.includes('Voltar')) {
+        if (answer.action === 'voltar') {
             inSubMenu = false;
             return;
         }
 
-        await runAdvancedCommand(answer.action);
+        await dispatchAdvancedAction(answer.action);
     }
-}
-
-async function runAdvancedCommand(action) {
-    console.log('');
-
-    switch (action) {
-        case '🚑 Verificar Integridade (SFC Scan)':
-            console.log(chalk.yellow('Iniciando System File Checker...'));
-            console.log(chalk.gray('Isso vai buscar e corrigir arquivos corrompidos do Windows.'));
-            console.log(chalk.cyan('Aguarde, isso pode demorar...'));
-            // O output do sfc aparecerá em tempo real no terminal
-            shell.exec('sfc /scannow');
-            break;
-
-        case '🏥 Verificar Imagem do Windows (DISM Check)':
-            console.log(chalk.yellow('Verificando saúde da imagem do sistema...'));
-            shell.exec('dism /online /cleanup-image /checkhealth');
-            break;
-
-        case '💊 Reparar Imagem do Windows (DISM Restore)':
-            console.log(chalk.red('⚠ Atenção: Este processo baixa arquivos do Windows Update.'));
-            console.log(chalk.yellow('Iniciando reparo profundo...'));
-            shell.exec('dism /online /cleanup-image /restorehealth');
-            break;
-
-        case '💾 Verificar Disco (CHKDSK - Leitura)':
-            console.log(chalk.cyan('Verificando sistema de arquivos (apenas leitura)...'));
-            // Rodamos sem /f para não travar pedindo agendamento de reinicialização
-            shell.exec('chkdsk');
-            console.log(chalk.gray('\nPara correção completa, rode "chkdsk /f /r" manualmente no CMD e reinicie.'));
-            break;
-    }
-
-    await waitPressEnter();
 }

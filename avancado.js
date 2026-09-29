@@ -3,7 +3,7 @@ import shell from 'shelljs';
 import chalk from 'chalk';
 import { waitPressEnter, isUserAdmin, showModuleHeader } from './utils.js';
 
-const advancedChoices = [
+export const advancedChoices = [
     { name: '[1] Verificar Integridade (SFC Scan)', value: 'sfc' },
     { name: '[2] Verificar Imagem do Windows (DISM Check)', value: 'dism_check' },
     { name: '[3] Reparar Imagem do Windows (DISM Restore)', value: 'dism_restore' },
@@ -20,44 +20,77 @@ async function notifyAccessDenied() {
     await waitPressEnter();
 }
 
-function executeSfcScan() {
+/**
+ * Executa o utilitario SFC (System File Checker) para checagem e reparo de arquivos.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function executeSfcScan(execFn = shell.exec) {
     console.log(chalk.yellow('Iniciando System File Checker...'));
     console.log(chalk.gray('Isso vai buscar e corrigir arquivos corrompidos do Windows.'));
     console.log(chalk.cyan('Aguarde, este processo pode demorar alguns minutos...'));
-    shell.exec('sfc /scannow');
+    const res = execFn('sfc /scannow');
+    return res?.code ?? 0;
 }
 
-function executeDismCheck() {
+/**
+ * Executa a verificacao da integridade da imagem do Windows com DISM.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function executeDismCheck(execFn = shell.exec) {
     console.log(chalk.yellow('Verificando saude da imagem do sistema...'));
-    shell.exec('dism /online /cleanup-image /checkhealth');
+    const res = execFn('dism /online /cleanup-image /checkhealth');
+    return res?.code ?? 0;
 }
 
-function executeDismRestore() {
+/**
+ * Dispara o procedimento de restauracao e reparo da imagem do Windows com DISM.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function executeDismRestore(execFn = shell.exec) {
     console.log(chalk.red('[ATENCAO] Este processo baixa arquivos de reparo do Windows Update.'));
     console.log(chalk.yellow('Iniciando reparo profundo da imagem...'));
-    shell.exec('dism /online /cleanup-image /restorehealth');
+    const res = execFn('dism /online /cleanup-image /restorehealth');
+    return res?.code ?? 0;
 }
 
-function executeChkdsk() {
+/**
+ * Executa checagem somente leitura do sistema de arquivos com CHKDSK.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function executeChkdsk(execFn = shell.exec) {
     console.log(chalk.cyan('Verificando sistema de arquivos (modo somente leitura)...'));
-    shell.exec('chkdsk');
+    const res = execFn('chkdsk');
     console.log(chalk.gray('\nPara correcao completa agendada, execute "chkdsk /f /r" manualmente.'));
+    return res?.code ?? 0;
 }
 
-const advancedActions = {
+export const advancedActions = {
     sfc: executeSfcScan,
     dism_check: executeDismCheck,
     dism_restore: executeDismRestore,
     chkdsk: executeChkdsk
 };
 
-async function dispatchAdvancedAction(action) {
+/**
+ * Roteia e despacha a execucao da ferramenta avancada escolhida.
+ * @param {string} action Identificador da acao.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @param {Function} [waitFn=waitPressEnter] Funcao de pausa interativa.
+ * @returns {Promise<boolean>} True se acao despachada com sucesso, false caso contrario.
+ */
+export async function dispatchAdvancedAction(action, execFn = shell.exec, waitFn = waitPressEnter) {
     const handler = advancedActions[action];
-    if (handler) {
-        console.log('');
-        handler();
-        await waitPressEnter();
+    if (!handler) {
+        return false;
     }
+    console.log('');
+    handler(execFn);
+    await waitFn();
+    return true;
 }
 
 export async function menuAvancado() {

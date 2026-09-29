@@ -1,10 +1,9 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import { execSync } from 'child_process';
 import { waitPressEnter, showModuleHeader } from './utils.js';
 
-const cleanupChoices = [
+export const cleanupChoices = [
     { name: '[1] Arquivos Temporarios (%TEMP%)', value: 'temp' },
     { name: '[2] Esvaziar Lixeira (PowerShell)', value: 'recycle_bin' },
     { name: '[3] Cache do Windows (Prefetch - Requer Admin)', value: 'prefetch' },
@@ -13,61 +12,94 @@ const cleanupChoices = [
     { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
 ];
 
-function cleanTempFiles() {
+/**
+ * Remove arquivos temporarios do usuario do diretorio %TEMP%.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno.
+ */
+export function cleanTempFiles(execFn = shell.exec) {
     console.log(chalk.yellow('Varrendo pasta temporaria do usuario (%TEMP%)...'));
     try {
-        execSync('del /f /s /q %temp%\\*', { stdio: 'inherit' });
+        execFn('del /f /s /q %temp%\\*');
     } catch {
         console.log(chalk.gray('[AVISO] Arquivos em uso pelo sistema nao foram removidos.'));
     }
     console.log(chalk.green('\n[OK] Limpeza de temporarios finalizada.'));
+    return 0;
 }
 
-function cleanRecycleBin() {
+/**
+ * Dispara o comando PowerShell para esvaziar a Lixeira do Windows.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno.
+ */
+export function cleanRecycleBin(execFn = shell.exec) {
     console.log(chalk.cyan('Esvaziando Lixeira...'));
     const command = 'powershell.exe -Command "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"';
-    shell.exec(command, { silent: false });
+    const res = execFn(command, { silent: false });
     console.log(chalk.green('[OK] Lixeira processada.'));
+    return res?.code ?? 0;
 }
 
-function cleanPrefetch() {
+/**
+ * Remove arquivos de cache da pasta Prefetch (requer administrador).
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno.
+ */
+export function cleanPrefetch(execFn = shell.exec) {
     console.log(chalk.cyan('Limpando pasta Prefetch...'));
-    const res = shell.exec('del /f /s /q C:\\Windows\\Prefetch\\*');
-    if (res.code !== 0) {
+    const res = execFn('del /f /s /q C:\\Windows\\Prefetch\\*');
+    if (res?.code !== 0) {
         console.log(chalk.red('\n[ERRO] Falha ao limpar Prefetch. Requer privilegios de Administrador.'));
-        return;
+        return res?.code ?? 1;
     }
     console.log(chalk.green('\n[OK] Prefetch limpo com sucesso.'));
+    return 0;
 }
 
-function cleanWindowsUpdateCache() {
+/**
+ * Para o servico wuauserv, limpa a pasta SoftwareDistribution e reinicia o servico.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @returns {number} Codigo de retorno.
+ */
+export function cleanWindowsUpdateCache(execFn = shell.exec) {
     console.log(chalk.cyan('--- Parando servico Windows Update ---'));
-    shell.exec('net stop wuauserv');
+    execFn('net stop wuauserv');
 
     console.log(chalk.cyan('\n--- Apagando arquivos de cache ---'));
-    shell.exec('rd /s /q C:\\Windows\\SoftwareDistribution\\Download');
-    shell.exec('mkdir C:\\Windows\\SoftwareDistribution\\Download', { silent: true });
+    execFn('rd /s /q C:\\Windows\\SoftwareDistribution\\Download');
+    execFn('mkdir C:\\Windows\\SoftwareDistribution\\Download', { silent: true });
 
     console.log(chalk.cyan('\n--- Reiniciando servico Windows Update ---'));
-    shell.exec('net start wuauserv');
+    execFn('net start wuauserv');
 
     console.log(chalk.green('\n[OK] Manutencao do Windows Update concluida.'));
+    return 0;
 }
 
-const cleanupActions = {
+export const cleanupActions = {
     temp: cleanTempFiles,
     recycle_bin: cleanRecycleBin,
     prefetch: cleanPrefetch,
     software_distribution: cleanWindowsUpdateCache
 };
 
-async function dispatchCleanupAction(action) {
+/**
+ * Roteia e executa o procedimento de limpeza selecionado.
+ * @param {string} action Identificador da acao de limpeza.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @param {Function} [waitFn=waitPressEnter] Funcao de pausa interativa.
+ * @returns {Promise<boolean>} True se acao despachada com sucesso, false caso contrario.
+ */
+export async function dispatchCleanupAction(action, execFn = shell.exec, waitFn = waitPressEnter) {
     const handler = cleanupActions[action];
-    if (handler) {
-        console.log('');
-        handler();
-        await waitPressEnter();
+    if (!handler) {
+        return false;
     }
+    console.log('');
+    handler(execFn);
+    await waitFn();
+    return true;
 }
 
 export async function menuLimpeza() {

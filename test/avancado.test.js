@@ -38,7 +38,17 @@ describe('avancado.js - Scripts Avancados de Reparo', () => {
             assert.equal(executedCmd, 'sfc /scannow');
             assert.equal(code, 0);
         });
+
+        it('deve capturar falha ou timeout graciosamente e retornar codigo 1', () => {
+            const fakeExec = () => {
+                throw new Error('ETIMEDOUT');
+            };
+
+            const code = executeSfcScan(fakeExec);
+            assert.equal(code, 1);
+        });
     });
+
 
     describe('executeDismCheck', () => {
         it('deve invocar dism checkhealth com parametros online corretos', () => {

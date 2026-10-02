@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { isUserAdmin, showModuleHeader } from '../utils.js';
+import { isUserAdmin, showModuleHeader, executeResilientCommand } from '../utils.js';
 
 describe('utils.js', () => {
     describe('isUserAdmin', () => {
@@ -43,4 +43,42 @@ describe('utils.js', () => {
             }
         });
     });
+
+    describe('executeResilientCommand', () => {
+        it('deve retornar status 0 e timedOut false quando o comando suceder', () => {
+            const fakeSpawn = (cmd, opts) => {
+                assert.equal(cmd, 'echo test');
+                assert.equal(opts.shell, true);
+                return { status: 0 };
+            };
+
+            const result = executeResilientCommand('echo test', {}, fakeSpawn);
+            assert.equal(result.code, 0);
+            assert.equal(result.timedOut, false);
+        });
+
+        it('deve identificar timeout ETIMEDOUT e retornar codigo 124 com timedOut true', () => {
+            const fakeSpawn = (cmd, opts) => {
+                assert.equal(opts.timeout, 1000);
+                const timeoutErr = new Error('timed out');
+                timeoutErr.code = 'ETIMEDOUT';
+                return { status: null, error: timeoutErr };
+            };
+
+            const result = executeResilientCommand('ping 127.0.0.1', { timeoutMs: 1000 }, fakeSpawn);
+            assert.equal(result.code, 124);
+            assert.equal(result.timedOut, true);
+        });
+
+        it('deve tratar falha geral de processo e retornar codigo de erro', () => {
+            const fakeSpawn = () => {
+                return { status: null, error: new Error('command not found') };
+            };
+
+            const result = executeResilientCommand('invalid_cmd', {}, fakeSpawn);
+            assert.equal(result.code, 1);
+            assert.equal(result.timedOut, false);
+        });
+    });
 });
+

@@ -23,50 +23,75 @@ async function notifyAccessDenied() {
 /**
  * Executa o utilitario SFC (System File Checker) para checagem e reparo de arquivos.
  * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @param {number} [timeoutMs=600000] Limite maximo em ms (padrao 10 minutos).
  * @returns {number} Codigo de retorno do processo.
  */
-export function executeSfcScan(execFn = shell.exec) {
+export function executeSfcScan(execFn = shell.exec, timeoutMs = 600000) {
     console.log(chalk.yellow('Iniciando System File Checker...'));
     console.log(chalk.gray('Isso vai buscar e corrigir arquivos corrompidos do Windows.'));
     console.log(chalk.cyan('Aguarde, este processo pode demorar alguns minutos...'));
-    const res = execFn('sfc /scannow');
-    return res?.code ?? 0;
+    try {
+        const res = execFn('sfc /scannow', { timeout: timeoutMs });
+        return res?.code ?? 0;
+    } catch {
+        console.log(chalk.red('\n[ERRO] Operacao interrompida ou limite de tempo excedido.'));
+        return 1;
+    }
 }
 
 /**
  * Executa a verificacao da integridade da imagem do Windows com DISM.
  * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @param {number} [timeoutMs=300000] Limite maximo em ms (padrao 5 minutos).
  * @returns {number} Codigo de retorno do processo.
  */
-export function executeDismCheck(execFn = shell.exec) {
+export function executeDismCheck(execFn = shell.exec, timeoutMs = 300000) {
     console.log(chalk.yellow('Verificando saude da imagem do sistema...'));
-    const res = execFn('dism /online /cleanup-image /checkhealth');
-    return res?.code ?? 0;
+    try {
+        const res = execFn('dism /online /cleanup-image /checkhealth', { timeout: timeoutMs });
+        return res?.code ?? 0;
+    } catch {
+        console.log(chalk.red('\n[ERRO] Operacao interrompida ou limite de tempo excedido.'));
+        return 1;
+    }
 }
 
 /**
  * Dispara o procedimento de restauracao e reparo da imagem do Windows com DISM.
  * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @param {number} [timeoutMs=900000] Limite maximo em ms (padrao 15 minutos).
  * @returns {number} Codigo de retorno do processo.
  */
-export function executeDismRestore(execFn = shell.exec) {
+export function executeDismRestore(execFn = shell.exec, timeoutMs = 900000) {
     console.log(chalk.red('[ATENCAO] Este processo baixa arquivos de reparo do Windows Update.'));
     console.log(chalk.yellow('Iniciando reparo profundo da imagem...'));
-    const res = execFn('dism /online /cleanup-image /restorehealth');
-    return res?.code ?? 0;
+    try {
+        const res = execFn('dism /online /cleanup-image /restorehealth', { timeout: timeoutMs });
+        return res?.code ?? 0;
+    } catch {
+        console.log(chalk.red('\n[ERRO] Operacao interrompida ou limite de tempo excedido.'));
+        return 1;
+    }
 }
 
 /**
  * Executa checagem somente leitura do sistema de arquivos com CHKDSK.
  * @param {Function} [execFn=shell.exec] Funcao executora de comandos.
+ * @param {number} [timeoutMs=300000] Limite maximo em ms (padrao 5 minutos).
  * @returns {number} Codigo de retorno do processo.
  */
-export function executeChkdsk(execFn = shell.exec) {
+export function executeChkdsk(execFn = shell.exec, timeoutMs = 300000) {
     console.log(chalk.cyan('Verificando sistema de arquivos (modo somente leitura)...'));
-    const res = execFn('chkdsk');
-    console.log(chalk.gray('\nPara correcao completa agendada, execute "chkdsk /f /r" manualmente.'));
-    return res?.code ?? 0;
+    try {
+        const res = execFn('chkdsk', { timeout: timeoutMs });
+        console.log(chalk.gray('\nPara correcao completa agendada, execute "chkdsk /f /r" manualmente.'));
+        return res?.code ?? 0;
+    } catch {
+        console.log(chalk.red('\n[ERRO] Operacao interrompida ou limite de tempo excedido.'));
+        return 1;
+    }
 }
+
 
 export const advancedActions = {
     sfc: executeSfcScan,

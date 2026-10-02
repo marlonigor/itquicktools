@@ -6,6 +6,8 @@ import {
     showBiosSerial,
     showWindowsVersion,
     showDisks,
+    generateBatteryReport,
+    showPowerStates,
     dispatchSystemAction
 } from '../sistema.js';
 
@@ -22,9 +24,18 @@ describe('sistema.js - Informacoes do Sistema', () => {
 
         it('deve conter as opcoes esperadas incluindo opcao de voltar', () => {
             const values = systemChoices.map((c) => c.value).filter(Boolean);
-            assert.deepEqual(values, ['whoami', 'bios', 'os_version', 'disks', 'voltar']);
+            assert.deepEqual(values, [
+                'whoami',
+                'bios',
+                'os_version',
+                'disks',
+                'battery_report',
+                'power_states',
+                'voltar'
+            ]);
         });
     });
+
 
     describe('showHostAndUser', () => {
         it('deve executar hostname e whoami e retornar codigo 0', () => {
@@ -82,7 +93,49 @@ describe('sistema.js - Informacoes do Sistema', () => {
         });
     });
 
+    describe('generateBatteryReport', () => {
+        it('deve gerar relatorio com powercfg, disparar visualizador e retornar 0', () => {
+            const commands = [];
+            const fakeExec = (cmd) => {
+                commands.push(cmd);
+                return { code: 0 };
+            };
+
+            const code = generateBatteryReport(fakeExec);
+            assert.equal(commands[0].includes('powercfg /batteryreport'), true);
+            assert.equal(commands[1].includes('start ""'), true);
+            assert.equal(code, 0);
+        });
+
+        it('deve retornar codigo diferente de 0 e nao disparar start se falhar', () => {
+            const commands = [];
+            const fakeExec = (cmd) => {
+                commands.push(cmd);
+                return { code: 1 };
+            };
+
+            const code = generateBatteryReport(fakeExec);
+            assert.equal(commands.length, 1);
+            assert.equal(code, 1);
+        });
+    });
+
+    describe('showPowerStates', () => {
+        it('deve invocar powercfg /a e retornar 0', () => {
+            let executedCmd = null;
+            const fakeExec = (cmd) => {
+                executedCmd = cmd;
+                return { code: 0 };
+            };
+
+            const code = showPowerStates(fakeExec);
+            assert.equal(executedCmd, 'powercfg /a');
+            assert.equal(code, 0);
+        });
+    });
+
     describe('dispatchSystemAction', () => {
+
         it('deve despachar acao valida executando o handler e a funcao de espera', async () => {
             let execCalled = false;
             let waitCalled = false;

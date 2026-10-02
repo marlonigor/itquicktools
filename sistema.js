@@ -8,6 +8,8 @@ export const systemChoices = [
     { name: '[2] Serial Number (BIOS)', value: 'bios' },
     { name: '[3] Versao do Windows', value: 'os_version' },
     { name: '[4] Listar Discos e Particoes', value: 'disks' },
+    { name: '[5] Relatorio de Bateria (Battery Report)', value: 'battery_report' },
+    { name: '[6] Estados de Energia Suportados (powercfg /a)', value: 'power_states' },
     new inquirer.Separator(),
     { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
 ];
@@ -60,12 +62,44 @@ export function showDisks(execFn = shell.exec) {
     return result?.code ?? 0;
 }
 
+/**
+ * Gera relatorio HTML de saude da bateria e abre no navegador padrao.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function generateBatteryReport(execFn = shell.exec) {
+    console.log(chalk.cyan('Gerando relatorio de saude da bateria (powercfg)...'));
+    const outputPath = '%TEMP%\\battery-report.html';
+    const result = execFn(`powercfg /batteryreport /output "${outputPath}"`);
+    if (result?.code === 0) {
+        console.log(chalk.green(`\n[OK] Relatorio salvo em ${outputPath}. Abrindo no navegador...`));
+        execFn(`start "" "${outputPath}"`);
+        return 0;
+    }
+    console.log(chalk.yellow('\n[AVISO] Bateria nao detectada ou recurso nao suportado neste hardware.'));
+    return result?.code ?? 1;
+}
+
+/**
+ * Exibe os estados de suspensao e energia disponiveis no sistema.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function showPowerStates(execFn = shell.exec) {
+    console.log(chalk.cyan('Consultando estados de energia suportados (powercfg /a)...'));
+    const result = execFn('powercfg /a');
+    return result?.code ?? 0;
+}
+
 export const systemActions = {
     whoami: showHostAndUser,
     bios: showBiosSerial,
     os_version: showWindowsVersion,
-    disks: showDisks
+    disks: showDisks,
+    battery_report: generateBatteryReport,
+    power_states: showPowerStates
 };
+
 
 /**
  * Despacha a acao de informacoes do sistema solicitada.

@@ -3,7 +3,7 @@ import shell from 'shelljs';
 import chalk from 'chalk';
 import { waitPressEnter, showModuleHeader } from './utils.js';
 
-const systemChoices = [
+export const systemChoices = [
     { name: '[1] Hostname e Usuario Atual', value: 'whoami' },
     { name: '[2] Serial Number (BIOS)', value: 'bios' },
     { name: '[3] Versao do Windows', value: 'os_version' },
@@ -12,44 +12,81 @@ const systemChoices = [
     { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
 ];
 
-function showHostAndUser() {
+/**
+ * Exibe o nome da maquina e o usuario atualmente autenticado.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function showHostAndUser(execFn = shell.exec) {
     console.log(chalk.cyan('Obtendo identificacao...'));
-    shell.exec('hostname');
-    shell.exec('whoami');
+    execFn('hostname');
+    const result = execFn('whoami');
+    return result?.code ?? 0;
 }
 
-function showBiosSerial() {
+/**
+ * Consulta fabricante e numero de serie da BIOS via CIM/WMI.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function showBiosSerial(execFn = shell.exec) {
     console.log(chalk.cyan('Lendo informacoes da BIOS...'));
     const query = 'Get-CimInstance Win32_Bios | Select-Object SerialNumber, Manufacturer | Format-Table -AutoSize';
-    shell.exec(`powershell -Command "${query}"`);
+    const result = execFn(`powershell -Command "${query}"`);
+    return result?.code ?? 0;
 }
 
-function showWindowsVersion() {
+/**
+ * Consulta a versao detalhada, edicao e build do Windows.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function showWindowsVersion(execFn = shell.exec) {
     console.log(chalk.cyan('Verificando versao do Windows...'));
     const query = 'Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber | Format-Table -AutoSize';
-    shell.exec(`powershell -Command "${query}"`);
+    const result = execFn(`powershell -Command "${query}"`);
+    return result?.code ?? 0;
 }
 
-function showDisks() {
+/**
+ * Lista os volumes de disco e o espaco disponivel.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function showDisks(execFn = shell.exec) {
     console.log(chalk.cyan('Listando volumes logicos...'));
     const query = 'Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID, VolumeName, Size, FreeSpace | Format-Table -AutoSize';
-    shell.exec(`powershell -Command "${query}"`);
+    const result = execFn(`powershell -Command "${query}"`);
+    return result?.code ?? 0;
 }
 
-const systemActions = {
+export const systemActions = {
     whoami: showHostAndUser,
     bios: showBiosSerial,
     os_version: showWindowsVersion,
     disks: showDisks
 };
 
-async function dispatchSystemAction(action) {
+/**
+ * Despacha a acao de informacoes do sistema solicitada.
+ * @param {string} action Identificador da acao.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @param {Function} [waitFn=waitPressEnter] Funcao de espera interativa.
+ * @returns {Promise<boolean>} True se acao despachada, false caso contrario.
+ */
+export async function dispatchSystemAction(
+    action,
+    execFn = shell.exec,
+    waitFn = waitPressEnter
+) {
     const handler = systemActions[action];
-    if (handler) {
-        console.log('');
-        handler();
-        await waitPressEnter();
+    if (!handler) {
+        return false;
     }
+    console.log('');
+    handler(execFn);
+    await waitFn();
+    return true;
 }
 
 export async function menuSistema() {
@@ -76,3 +113,4 @@ export async function menuSistema() {
         await dispatchSystemAction(answer.action);
     }
 }
+

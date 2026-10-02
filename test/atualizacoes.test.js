@@ -33,11 +33,13 @@ describe('atualizacoes.js - Central de Atualizacoes', () => {
                 return { code: 0 };
             };
 
+            const expectedCmd = 'winget upgrade --all --silent --accept-source-agreements --accept-package-agreements --disable-interactivity';
             const code = executeWingetUpgrade(fakeExec);
-            assert.equal(executedCmd, 'winget upgrade --all --include-unknown');
+            assert.equal(executedCmd, expectedCmd);
             assert.equal(code, 0);
         });
     });
+
 
     describe('executeDefenderUpdate', () => {
         it('deve retornar 0 quando o comando do Defender suceder', () => {

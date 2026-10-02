@@ -19,11 +19,13 @@ export const updateChoices = [
 export function executeWingetUpgrade(execFn = shell.exec) {
     console.log(chalk.cyan('Iniciando Winget Upgrade All...'));
     console.log(chalk.gray('--------------------------------------------------'));
-    const res = execFn('winget upgrade --all --include-unknown');
+    const cmd = 'winget upgrade --all --silent --accept-source-agreements --accept-package-agreements --disable-interactivity';
+    const res = execFn(cmd);
     console.log(chalk.gray('--------------------------------------------------'));
     console.log(chalk.green('[OK] Processo do Winget finalizado.'));
     return res?.code ?? 0;
 }
+
 
 /**
  * Dispara a atualizacao das definicoes do Windows Defender via MpCmdRun.

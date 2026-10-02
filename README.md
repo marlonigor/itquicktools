@@ -30,6 +30,8 @@ Inspecao e inventario de hardware e sistema operacional via CIM:
 - Numero de serie e fabricante via BIOS (`Win32_Bios`)
 - Versao e build do Windows (`Win32_OperatingSystem`)
 - Inventario de discos e espaco disponivel (`Win32_LogicalDisk`)
+- Relatorio de saude da bateria em HTML (`powercfg /batteryreport`)
+- Consulta aos estados de energia suportados (`powercfg /a`)
 
 ---
 
@@ -62,12 +64,21 @@ Atalhos diretos e utilitarios de reparo profundo de integridade:
 
 ## Instalacao e Execucao
 
-### Pre-requisitos
+### Execucao Rapida via PowerShell (Recomendado)
+Para executar a versao mais recente imediatamente em qualquer maquina Windows com um unico comando (com auto-elevacao para Administrador se necessario):
+
+```powershell
+irm https://raw.githubusercontent.com/marlonigor/itquicktools/main/scripts/boot.ps1 | iex
+```
+
+*(O script baixa a versao mais recente, prepara as dependencias de forma isolada em `%LOCALAPPDATA%\ITQuickTools` e inicia a ferramenta imediatamente).*
+
+### Pre-requisitos (para execucao local/desenvolvimento)
 - Windows 10 ou 11
 - Node.js 18 ou superior instalado
 - Terminal com privilegios de Administrador (para funcoes avancadas de reparo e limpeza)
 
-### Execucao Direta
+### Execucao Direta do Codigo-Fonte
 ```bash
 # Instalar dependencias
 npm install
@@ -75,6 +86,7 @@ npm install
 # Iniciar aplicacao
 node index.js
 ```
+
 
 ### Instalacao como Utilitario Global (CLI)
 Para disponibilizar o comando `itquicktools` globalmente no PowerShell ou CMD:

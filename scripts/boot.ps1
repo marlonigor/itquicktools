@@ -3,6 +3,7 @@
 # Uso: irm https://raw.githubusercontent.com/marlonigor/itquicktools/main/scripts/boot.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 function Test-IsAdmin {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -10,28 +11,35 @@ function Test-IsAdmin {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function Ensure-Elevation {
-    if (-not (Test-IsAdmin)) {
-        Write-Host '[INFO] Solicitando elevacao de privilegios como Administrador...' -ForegroundColor Yellow
-        $scriptPath = $MyInvocation.MyCommand.Definition
-        if ($scriptPath) {
-            Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`"" -Verb RunAs
-        } else {
-            Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"irm https://raw.githubusercontent.com/marlonigor/itquicktools/main/scripts/boot.ps1 | iex`"" -Verb RunAs
-        }
-        exit 0
-    }
-}
-
-function Ensure-NodeInstalled {
-    $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
-    if ($null -ne $nodeCmd) {
+function Invoke-Elevation {
+    if (Test-IsAdmin) {
         return
     }
 
-    Write-Host '[AVISO] Node.js nao encontrado no sistema.' -ForegroundColor Yellow
-    Write-Host '[INFO] Instalando Node.js LTS via Winget em segundo plano...' -ForegroundColor Cyan
+    Write-Host '[INFO] Solicitando elevacao de privilegios como Administrador...' -ForegroundColor Yellow
+    $scriptPath = $PSCommandPath
 
+    if ($scriptPath -and (Test-Path $scriptPath)) {
+        Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$scriptPath`"") -Verb RunAs
+    } else {
+        $bootCommand = "Invoke-RestMethod 'https://raw.githubusercontent.com/marlonigor/itquicktools/main/scripts/boot.ps1' | Invoke-Expression"
+        Start-Process powershell.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', $bootCommand) -Verb RunAs
+    }
+    exit 0
+}
+
+function Refresh-NodeEnvironmentPath {
+    $machinePath = [System.Environment]::GetEnvironmentVariable('Path', 'Machine')
+    $userPath = [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    $env:Path = "$machinePath;$userPath"
+
+    $fallbackNode = 'C:\Program Files\nodejs'
+    if ((Test-Path $fallbackNode) -and ($env:Path -notlike "*$fallbackNode*")) {
+        $env:Path = "$fallbackNode;$env:Path"
+    }
+}
+
+function Install-NodeWithWinget {
     $wingetCmd = Get-Command winget -ErrorAction SilentlyContinue
     if ($null -eq $wingetCmd) {
         Write-Host '[ERRO] Nem Node.js nem Winget estao disponiveis nesta maquina.' -ForegroundColor Red
@@ -39,11 +47,45 @@ function Ensure-NodeInstalled {
         exit 1
     }
 
-    & winget install OpenJS.NodeJS.LTS --silent --accept-source-agreements --accept-package-agreements --disable-interactivity
-    $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User')
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & winget install OpenJS.NodeJS.LTS --silent --accept-source-agreements --accept-package-agreements --disable-interactivity
+    } finally {
+        $ErrorActionPreference = $prevEAP
+    }
+
+    Refresh-NodeEnvironmentPath
 }
 
-function Sync-Repository {
+function Assert-NodeInstalled {
+    $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+    if ($null -ne $nodeCmd) {
+        return
+    }
+
+    Write-Host '[AVISO] Node.js nao encontrado no sistema.' -ForegroundColor Yellow
+    Write-Host '[INFO] Instalando Node.js LTS via Winget em segundo plano...' -ForegroundColor Cyan
+    Install-NodeWithWinget
+}
+
+function Copy-DirectoryContent {
+    param([string]$sourceDir, [string]$targetDir)
+
+    Get-ChildItem -Path $sourceDir -Recurse | ForEach-Object {
+        $relativePath = $_.FullName.Substring($sourceDir.Length + 1)
+        $destination = Join-Path $targetDir $relativePath
+        if ($_.PSIsContainer) {
+            if (-not (Test-Path $destination)) {
+                New-Item -ItemType Directory -Path $destination -Force | Out-Null
+            }
+        } else {
+            Copy-Item -Path $_.FullName -Destination $destination -Force
+        }
+    }
+}
+
+function Update-LocalRepository {
     param([string]$targetDir)
 
     $zipUrl = 'https://github.com/marlonigor/itquicktools/archive/refs/heads/main.zip'
@@ -60,28 +102,32 @@ function Sync-Repository {
     Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
     Remove-Item -Path $zipPath -Force
 
-    $sourceDir = Join-Path $extractPath 'itquicktools-main'
-
     if (-not (Test-Path $targetDir)) {
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
     }
 
-    Copy-Item -Path "$sourceDir\*" -Destination $targetDir -Recurse -Force
+    $sourceDir = Join-Path $extractPath 'itquicktools-main'
+    Copy-DirectoryContent -sourceDir $sourceDir -targetDir $targetDir
     Remove-Item -Path $extractPath -Recurse -Force
 }
 
-function Install-Dependencies {
+function Install-AppDependency {
     param([string]$targetDir)
 
     $modulesDir = Join-Path $targetDir 'node_modules'
-    if (-not (Test-Path $modulesDir)) {
-        Write-Host '[INFO] Instalando dependencias necessarias...' -ForegroundColor Cyan
-        Push-Location $targetDir
-        try {
-            & npm install --omit=dev --silent
-        } finally {
-            Pop-Location
-        }
+    if (Test-Path $modulesDir) {
+        return
+    }
+
+    Write-Host '[INFO] Instalando dependencias necessarias...' -ForegroundColor Cyan
+    Push-Location $targetDir
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & npm install --omit=dev --silent
+    } finally {
+        $ErrorActionPreference = $prevEAP
+        Pop-Location
     }
 }
 
@@ -98,16 +144,16 @@ function Start-Application {
     }
 }
 
-function Main {
-    Ensure-Elevation
+function Invoke-Bootstrapper {
+    Invoke-Elevation
 
     $appData = [System.Environment]::GetFolderPath('LocalApplicationData')
     $targetDir = Join-Path $appData 'ITQuickTools'
 
-    Ensure-NodeInstalled
-    Sync-Repository -targetDir $targetDir
-    Install-Dependencies -targetDir $targetDir
+    Assert-NodeInstalled
+    Update-LocalRepository -targetDir $targetDir
+    Install-AppDependency -targetDir $targetDir
     Start-Application -targetDir $targetDir
 }
 
-Main
+Invoke-Bootstrapper

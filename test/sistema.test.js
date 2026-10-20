@@ -6,6 +6,8 @@ import {
     showBiosSerial,
     showWindowsVersion,
     showDisks,
+    showPhysicalDisksHealth,
+    showPhysicalMemoryDetails,
     generateBatteryReport,
     showPowerStates,
     dispatchSystemAction
@@ -29,6 +31,8 @@ describe('sistema.js - Informacoes do Sistema', () => {
                 'bios',
                 'os_version',
                 'disks',
+                'physical_disks',
+                'ram_memory',
                 'battery_report',
                 'power_states',
                 'voltar'
@@ -89,6 +93,38 @@ describe('sistema.js - Informacoes do Sistema', () => {
 
             const code = showDisks(fakeExec);
             assert.equal(executedCmd.includes('Win32_LogicalDisk'), true);
+            assert.equal(code, 0);
+        });
+    });
+
+    describe('showPhysicalDisksHealth', () => {
+        it('deve consultar saude fisica dos discos via Get-PhysicalDisk e retornar 0', () => {
+            let executedCmd = null;
+            const fakeExec = (cmd) => {
+                executedCmd = cmd;
+                return { code: 0 };
+            };
+
+            const code = showPhysicalDisksHealth(fakeExec);
+            assert.equal(executedCmd.includes('Get-PhysicalDisk'), true);
+            assert.equal(executedCmd.includes('OperationalStatus'), true);
+            assert.equal(executedCmd.includes('HealthStatus'), true);
+            assert.equal(code, 0);
+        });
+    });
+
+    describe('showPhysicalMemoryDetails', () => {
+        it('deve consultar modulos de memoria RAM via Win32_PhysicalMemory e retornar 0', () => {
+            let executedCmd = null;
+            const fakeExec = (cmd) => {
+                executedCmd = cmd;
+                return { code: 0 };
+            };
+
+            const code = showPhysicalMemoryDetails(fakeExec);
+            assert.equal(executedCmd.includes('Win32_PhysicalMemory'), true);
+            assert.equal(executedCmd.includes('DeviceLocator'), true);
+            assert.equal(executedCmd.includes('ConfiguredClockSpeed'), true);
             assert.equal(code, 0);
         });
     });

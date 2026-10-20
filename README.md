@@ -30,6 +30,8 @@ Inspecao e inventario de hardware e sistema operacional via CIM:
 - Numero de serie e fabricante via BIOS (`Win32_Bios`)
 - Versao e build do Windows (`Win32_OperatingSystem`)
 - Inventario de discos e espaco disponivel (`Win32_LogicalDisk`)
+- Saude dos discos fisicos e integridade SMART (`Get-PhysicalDisk`)
+- Modulos de memoria RAM instalados, capacidade e clock (`Win32_PhysicalMemory`)
 - Relatorio de saude da bateria em HTML (`powercfg /batteryreport`)
 - Consulta aos estados de energia suportados (`powercfg /a`)
 

@@ -7,9 +7,11 @@ export const systemChoices = [
     { name: '[1] Hostname e Usuario Atual', value: 'whoami' },
     { name: '[2] Serial Number (BIOS)', value: 'bios' },
     { name: '[3] Versao do Windows', value: 'os_version' },
-    { name: '[4] Listar Discos e Particoes', value: 'disks' },
-    { name: '[5] Relatorio de Bateria (Battery Report)', value: 'battery_report' },
-    { name: '[6] Estados de Energia Suportados (powercfg /a)', value: 'power_states' },
+    { name: '[4] Listar Discos e Particoes (Logicos)', value: 'disks' },
+    { name: '[5] Saude dos Discos Fisicos (SMART)', value: 'physical_disks' },
+    { name: '[6] Modulos e Slots de Memoria RAM', value: 'ram_memory' },
+    { name: '[7] Relatorio de Bateria (Battery Report)', value: 'battery_report' },
+    { name: '[8] Estados de Energia Suportados (powercfg /a)', value: 'power_states' },
     new inquirer.Separator(),
     { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
 ];
@@ -63,6 +65,30 @@ export function showDisks(execFn = shell.exec) {
 }
 
 /**
+ * Consulta a saude fisica (SMART), tipo de midia e integridade dos discos.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function showPhysicalDisksHealth(execFn = shell.exec) {
+    console.log(chalk.cyan('Consultando saude dos discos fisicos (SMART)...'));
+    const query = 'Get-PhysicalDisk | Select-Object DeviceId, FriendlyName, SerialNumber, MediaType, OperationalStatus, HealthStatus | Format-Table -AutoSize';
+    const result = execFn(`powershell -Command "${query}"`);
+    return result?.code ?? 0;
+}
+
+/**
+ * Consulta modulos fisicos de memoria RAM instalados, capacidade e frequencia.
+ * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function showPhysicalMemoryDetails(execFn = shell.exec) {
+    console.log(chalk.cyan('Consultando modulos de memoria RAM instalados...'));
+    const query = "Get-CimInstance Win32_PhysicalMemory | Select-Object BankLabel, DeviceLocator, @{Name='Capacidade (GB)';Expression={[math]::Round($_.Capacity / 1GB, 1)}}, ConfiguredClockSpeed, Manufacturer, PartNumber | Format-Table -AutoSize";
+    const result = execFn(`powershell -Command "${query}"`);
+    return result?.code ?? 0;
+}
+
+/**
  * Gera relatorio HTML de saude da bateria e abre no navegador padrao.
  * @param {Function} [execFn=shell.exec] Funcao executora injetavel.
  * @returns {number} Codigo de retorno do processo.
@@ -96,6 +122,8 @@ export const systemActions = {
     bios: showBiosSerial,
     os_version: showWindowsVersion,
     disks: showDisks,
+    physical_disks: showPhysicalDisksHealth,
+    ram_memory: showPhysicalMemoryDetails,
     battery_report: generateBatteryReport,
     power_states: showPowerStates
 };
@@ -134,7 +162,7 @@ export async function menuSistema() {
                 type: 'list',
                 name: 'action',
                 message: 'Informacoes do Sistema:',
-                pageSize: 10,
+                pageSize: 12,
                 choices: systemChoices
             }
         ]);

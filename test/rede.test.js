@@ -4,6 +4,8 @@ import {
     networkChoices,
     executeIpConfig,
     executeFlushDns,
+    executeRenewDhcp,
+    executeResetNetworkStack,
     executePing,
     executeTracert,
     dispatchNetworkAction
@@ -22,7 +24,15 @@ describe('rede.js - Ferramentas de Rede', () => {
 
         it('deve conter as opcoes esperadas incluindo opcao de voltar', () => {
             const values = networkChoices.map((c) => c.value).filter(Boolean);
-            assert.deepEqual(values, ['ipconfig', 'flushdns', 'ping', 'tracert', 'voltar']);
+            assert.deepEqual(values, [
+                'ipconfig',
+                'flushdns',
+                'renew_dhcp',
+                'reset_network',
+                'ping',
+                'tracert',
+                'voltar'
+            ]);
         });
     });
 
@@ -60,6 +70,64 @@ describe('rede.js - Ferramentas de Rede', () => {
             const fakeRunner = () => ({ code: 1, timedOut: false });
             const code = executeFlushDns(fakeRunner);
             assert.equal(code, 1);
+        });
+    });
+
+    describe('executeRenewDhcp', () => {
+        it('deve executar release e renew com sucesso e retornar 0', () => {
+            const executed = [];
+            const fakeRunner = (cmd) => {
+                executed.push(cmd);
+                return { code: 0, timedOut: false };
+            };
+
+            const code = executeRenewDhcp(fakeRunner);
+            assert.deepEqual(executed, ['ipconfig /release', 'ipconfig /renew']);
+            assert.equal(code, 0);
+        });
+
+        it('deve retornar 0 se release emitir aviso mas renew tiver sucesso', () => {
+            const fakeRunner = (cmd) => {
+                if (cmd === 'ipconfig /release') return { code: 1, timedOut: false };
+                return { code: 0, timedOut: false };
+            };
+
+            const code = executeRenewDhcp(fakeRunner);
+            assert.equal(code, 0);
+        });
+
+        it('deve retornar codigo de erro quando renew falhar', () => {
+            const fakeRunner = (cmd) => {
+                if (cmd === 'ipconfig /renew') return { code: 2, timedOut: false };
+                return { code: 0, timedOut: false };
+            };
+
+            const code = executeRenewDhcp(fakeRunner);
+            assert.equal(code, 2);
+        });
+    });
+
+    describe('executeResetNetworkStack', () => {
+        it('deve executar winsock reset e tcp reset e retornar 0 em caso de sucesso', () => {
+            const executed = [];
+            const fakeRunner = (cmd) => {
+                executed.push(cmd);
+                return { code: 0, timedOut: false };
+            };
+
+            const code = executeResetNetworkStack(fakeRunner);
+            assert.deepEqual(executed, ['netsh winsock reset', 'netsh int ip reset']);
+            assert.equal(code, 0);
+        });
+
+        it('deve retornar codigo de erro quando winsock reset falhar', () => {
+            const fakeRunner = (cmd) => {
+                if (cmd === 'netsh winsock reset') return { code: 5, timedOut: false };
+                return { code: 0, timedOut: false };
+            };
+
+            const code = executeResetNetworkStack(fakeRunner);
+            assert.equal(code, 5);
         });
     });
 

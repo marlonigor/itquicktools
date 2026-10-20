@@ -19,6 +19,8 @@ A ferramenta unifica rotinas administrativas e operacionais (CMD, PowerShell, Wi
 Diagnostico rapido de conectividade e resolucao de nomes:
 - Mostrar IP e configuracoes de rede (`ipconfig`)
 - Limpar cache DNS do sistema (`flushdns`)
+- Liberar e renovar concessao DHCP (`ipconfig /release` e `/renew`)
+- Redefinir pilha de rede e catalogo Winsock (`netsh winsock reset` e `netsh int ip reset`)
 - Teste de conectividade com DNS primario do Google (`ping`)
 - Rastreamento de rota de pacotes (`tracert`)
 

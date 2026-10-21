@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { isUserAdmin, showModuleHeader, executeResilientCommand } from '../utils.js';
+import { isUserAdmin, showModuleHeader, executeResilientCommand } from '../src/core/utils.js';
 
 describe('utils.js', () => {
     describe('isUserAdmin', () => {

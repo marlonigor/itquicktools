@@ -2,11 +2,15 @@
   "name": "itquicktools",
   "version": "1.0.0",
   "description": "Ferramenta CLI interativa para administracao rapida do Windows",
-  "main": "index.js",
+  "main": "src/modulos/menu.js",
   "bin": {
-    "itquicktools": "./index.js"
+    "itquicktools": "./bin/itquicktools.js"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   },
   "scripts": {
+    "start": "node bin/itquicktools.js",
     "test": "node --test"
   },
   "repository": {

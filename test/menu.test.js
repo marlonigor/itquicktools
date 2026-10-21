@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildMainMenuChoices, handleChoice } from '../index.js';
+import { buildMainMenuChoices, handleChoice } from '../src/modulos/menu.js';
 
-describe('index.js - Menu e Roteamento', () => {
+describe('menu.js - Menu e Roteamento', () => {
     describe('buildMainMenuChoices', () => {
         it('deve exibir rotulo de admin para limpeza quando isAdmin for true', () => {
             const choices = buildMainMenuChoices(true);

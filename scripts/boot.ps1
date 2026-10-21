@@ -134,7 +134,10 @@ function Install-AppDependency {
 function Start-Application {
     param([string]$targetDir)
 
-    $entryPoint = Join-Path $targetDir 'index.js'
+    $entryPoint = Join-Path $targetDir 'bin\itquicktools.js'
+    if (-not (Test-Path $entryPoint)) {
+        $entryPoint = Join-Path $targetDir 'index.js'
+    }
     Write-Host '[OK] Inicializando IT Quick Tools...' -ForegroundColor Green
     Push-Location $targetDir
     try {

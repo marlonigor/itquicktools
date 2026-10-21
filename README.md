@@ -79,7 +79,7 @@ irm https://raw.githubusercontent.com/marlonigor/itquicktools/main/scripts/boot.
 
 ### Pre-requisitos (para execucao local/desenvolvimento)
 - Windows 10 ou 11
-- Node.js 18 ou superior instalado
+- Node.js 22 LTS ou superior instalado
 - Terminal com privilegios de Administrador (para funcoes avancadas de reparo e limpeza)
 
 ### Execucao Direta do Codigo-Fonte
@@ -88,7 +88,9 @@ irm https://raw.githubusercontent.com/marlonigor/itquicktools/main/scripts/boot.
 npm install
 
 # Iniciar aplicacao
-node index.js
+npm start
+# ou diretamente via bin:
+node bin/itquicktools.js
 ```
 
 

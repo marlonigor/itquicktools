@@ -5,7 +5,7 @@ import {
     diagnosticCommands,
     launchDiagnosticTool,
     dispatchDiagnosticAction
-} from '../diagnostico.js';
+} from '../src/modulos/diagnostico.js';
 
 describe('diagnostico.js - Ferramentas de Diagnostico', () => {
     describe('diagnosticChoices', () => {

@@ -1,7 +1,7 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import { waitPressEnter, isUserAdmin, showModuleHeader } from './utils.js';
+import { waitPressEnter, isUserAdmin, showModuleHeader } from '../core/utils.js';
 
 export const advancedChoices = [
     { name: '[1] Verificar Integridade (SFC Scan)', value: 'sfc' },

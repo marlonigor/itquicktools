@@ -7,7 +7,7 @@ import {
     cleanPrefetch,
     cleanWindowsUpdateCache,
     dispatchCleanupAction
-} from '../limpeza.js';
+} from '../src/modulos/limpeza.js';
 
 describe('limpeza.js - Modulo de Limpeza de Cache e Disco', () => {
     describe('cleanupChoices', () => {

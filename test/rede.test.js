@@ -9,7 +9,7 @@ import {
     executePing,
     executeTracert,
     dispatchNetworkAction
-} from '../rede.js';
+} from '../src/modulos/rede.js';
 
 describe('rede.js - Ferramentas de Rede', () => {
     describe('networkChoices', () => {

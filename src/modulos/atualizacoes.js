@@ -1,7 +1,7 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import { waitPressEnter, showModuleHeader } from './utils.js';
+import { waitPressEnter, showModuleHeader } from '../core/utils.js';
 
 export const updateChoices = [
     { name: '[1] Atualizar Todos os Programas (Winget)', value: 'winget' },

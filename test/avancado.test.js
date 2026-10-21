@@ -7,7 +7,7 @@ import {
     executeDismRestore,
     executeChkdsk,
     dispatchAdvancedAction
-} from '../avancado.js';
+} from '../src/modulos/avancado.js';
 
 describe('avancado.js - Scripts Avancados de Reparo', () => {
     describe('advancedChoices', () => {

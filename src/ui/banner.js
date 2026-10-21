@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 
 export function showBanner() {
     const text = 'IT Quick Tools';
-    const fontPath = path.join(__dirname, 'assets', 'fonts', '3d.flf');
+    const fontPath = path.join(__dirname, '..', '..', 'assets', 'fonts', '3d.flf');
 
     try {
         // Carrega a fonte customizada

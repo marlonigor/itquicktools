@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import path from 'path';
 import { fileURLToPath } from 'url';
 import inquirer from 'inquirer';
@@ -9,8 +8,8 @@ import { menuLimpeza } from './limpeza.js';
 import { menuDiagnostico } from './diagnostico.js';
 import { menuAvancado } from './avancado.js';
 import { menuAtualizacoes } from './atualizacoes.js';
-import { waitPressEnter, isUserAdmin } from './utils.js';
-import { showBanner } from './banner.js';
+import { waitPressEnter, isUserAdmin } from '../core/utils.js';
+import { showBanner } from '../ui/banner.js';
 
 const categoryHandlers = {
     rede: menuRede,

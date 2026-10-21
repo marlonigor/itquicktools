@@ -1,6 +1,6 @@
 import inquirer from 'inquirer';
 import chalk from 'chalk';
-import { waitPressEnter, showModuleHeader, executeResilientCommand } from './utils.js';
+import { waitPressEnter, showModuleHeader, executeResilientCommand } from '../core/utils.js';
 
 export const networkChoices = [
     { name: '[1] Mostrar IP (ipconfig)', value: 'ipconfig' },

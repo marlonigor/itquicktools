@@ -11,7 +11,7 @@ import {
     generateBatteryReport,
     showPowerStates,
     dispatchSystemAction
-} from '../sistema.js';
+} from '../src/modulos/sistema.js';
 
 describe('sistema.js - Informacoes do Sistema', () => {
     describe('systemChoices', () => {

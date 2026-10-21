@@ -6,7 +6,7 @@ import {
     executeDefenderUpdate,
     executeWindowsUpdateScan,
     dispatchUpdateAction
-} from '../atualizacoes.js';
+} from '../src/modulos/atualizacoes.js';
 
 describe('atualizacoes.js - Central de Atualizacoes', () => {
     describe('updateChoices', () => {

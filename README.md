@@ -63,6 +63,7 @@ Atalhos diretos e utilitarios de reparo profundo de integridade:
 - Verificacao de arquivos de sistema (`sfc /scannow`)
 - Diagnostico e restauracao da imagem do Windows (`DISM`)
 - Verificacao de integridade de disco em modo leitura (`chkdsk`)
+- Auditoria de seguranca local (BitLocker, Secure Boot UEFI e status do Windows Defender)
 
 ---
 

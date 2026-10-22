@@ -8,6 +8,7 @@ export const advancedChoices = [
     { name: '[2] Verificar Imagem do Windows (DISM Check)', value: 'dism_check' },
     { name: '[3] Reparar Imagem do Windows (DISM Restore)', value: 'dism_restore' },
     { name: '[4] Verificar Disco (CHKDSK - Somente Leitura)', value: 'chkdsk' },
+    { name: '[5] Auditoria de Seguranca Local (BitLocker, Defender, SecureBoot)', value: 'security_audit' },
     new inquirer.Separator(),
     { name: '[0] Voltar ao Menu Principal', value: 'voltar' }
 ];
@@ -92,12 +93,62 @@ export function executeChkdsk(execFn = shell.exec, timeoutMs = 300000) {
     }
 }
 
+/**
+ * Consulta o status de protecao e criptografia BitLocker nos volumes locais.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos de sistema.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function auditBitLocker(execFn = shell.exec) {
+    console.log(chalk.yellow('\n--- Status do BitLocker ---'));
+    const query = 'try { Get-BitLockerVolume -ErrorAction Stop | Select-Object MountPoint, VolumeStatus, EncryptionPercentage, ProtectionStatus | Format-Table -AutoSize } catch { Write-Host "[AVISO] Nao foi possivel consultar BitLocker. Requer privilegios de Administrador ou edicao Pro/Enterprise." }';
+    const res = execFn(`powershell -Command "${query}"`);
+    return res?.code ?? 0;
+}
+
+/**
+ * Consulta se o Secure Boot (inicializacao segura UEFI) esta ativo no sistema.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos de sistema.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function auditSecureBoot(execFn = shell.exec) {
+    console.log(chalk.yellow('\n--- Status do Secure Boot (UEFI) ---'));
+    const query = "$sb = Get-ItemPropertyValue -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\SecureBoot\\State' -Name 'UEFISecureBootEnabled' -ErrorAction SilentlyContinue; if ($sb -eq 1) { Write-Host 'Secure Boot: ATIVADO (Protegido por UEFI)' } elseif ($sb -eq 0) { Write-Host 'Secure Boot: DESATIVADO' } else { Write-Host 'Secure Boot: Nao suportado ou modo BIOS legado' }";
+    const res = execFn(`powershell -Command "${query}"`);
+    return res?.code ?? 0;
+}
+
+/**
+ * Inspeciona o estado operacional e protecao em tempo real do Windows Defender.
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos de sistema.
+ * @returns {number} Codigo de retorno do processo.
+ */
+export function auditDefender(execFn = shell.exec) {
+    console.log(chalk.yellow('\n--- Status do Windows Defender ---'));
+    const query = 'try { Get-MpComputerStatus -ErrorAction Stop | Select-Object AntivirusEnabled, RealTimeProtectionEnabled, IoavProtectionEnabled, AntispywareSignatureVersion | Format-List } catch { Write-Host "[AVISO] Nao foi possivel consultar status do Windows Defender." }';
+    const res = execFn(`powershell -Command "${query}"`);
+    return res?.code ?? 0;
+}
+
+/**
+ * Executa ciclo completo de auditoria de seguranca local (BitLocker, Secure Boot e Defender).
+ * @param {Function} [execFn=shell.exec] Funcao executora de comandos de sistema.
+ * @returns {number} Codigo de retorno consolidado.
+ */
+export function executeSecurityAudit(execFn = shell.exec) {
+    console.log(chalk.cyan('Iniciando auditoria de seguranca local...'));
+    auditBitLocker(execFn);
+    auditSecureBoot(execFn);
+    auditDefender(execFn);
+    console.log(chalk.green('\n[OK] Auditoria de seguranca concluida.'));
+    return 0;
+}
 
 export const advancedActions = {
     sfc: executeSfcScan,
     dism_check: executeDismCheck,
     dism_restore: executeDismRestore,
-    chkdsk: executeChkdsk
+    chkdsk: executeChkdsk,
+    security_audit: executeSecurityAudit
 };
 
 /**
